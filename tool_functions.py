@@ -30,5 +30,14 @@ def get_machinistes(ligne, df=planning_df):
     return machinistes
 
 #print(get_machinistes(24))
+def get_machinistes_jour(jour,df=planning_df):
+    """renvoie la liste des machinistes pour un jour donné"""
+    machinistes=[]
+    for id in df.index:
+        if pd.isnull(df.loc[id,jour]):
+            machinistes.append(id)
+    return machinistes
+
+print(get_machinistes_jour("12/01/2026"))
 
 
