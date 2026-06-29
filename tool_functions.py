@@ -11,6 +11,7 @@ def lire_planning_excel_df(chemin_fichier: str):
     return df
 
 planning_df = lire_planning_excel_df("data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")
+non_affecte_dfs = [lire_planning_excel_df(f"Services Agents non affectés le 1{i}_01_2026.xlsx") for i in range(2, 7)]
 
 @tool
 def lire_planning_excel(chemin_fichier: str) -> str :
