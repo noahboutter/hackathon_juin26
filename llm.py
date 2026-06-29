@@ -2,15 +2,12 @@ import tool_functions as llmtools
 from langchain_ollama import OllamaLLM
 from langchain_classic.agents import AgentExecutor, create_structured_chat_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.tools import tool
 
-
-# Configuration d'Ollama et de l'Agent IA
-
+# Configuration d'Ollama et de l'Agent IA (Llama 3.1)
 llm = OllamaLLM(model="llama3.1", temperature=0)
 
-# Liste des outils mis à disposition de l'agent
-tools = [llmtools.lire_planning_excel]
+# 1. MODIFICATION : Liste des nouveaux outils mis à disposition de l'agent
+tools = [llmtools.get_machinistes, llmtools.get_machinistes_jour]
 
 # Création du prompt pour guider l'agent
 system_prompt = """Tu es un expert en ressources humaines et en planification de personnel.
@@ -24,19 +21,22 @@ Tu dois fournir un bloc JSON avec les clés "action" et "action_input".
 Voici les outils à ta disposition :
 {tools}
 
-Quand tu as fini et que tu as la réponse finale, tu dois obligatoirement utiliser l'action "Final Answer" :
+Quand tu as fini et que tu as la réponse finale, tu devez obligatoirement utiliser l'action "Final Answer" :
 - action: "Final Answer"
 - action_input: "Ta réponse en français ici"
 """
 
+# Prompt avec historique de conversation et bloc-notes de l'agent
+prompt = ChatPromptTemplate.from_messages([
+    ("system", system_prompt), 
+    MessagesPlaceholder(variable_name="chat_history", optional=True),
+    ("human", "{input}\n\n{agent_scratchpad}"),
+])
 
-#on fait un joli prompt avec notre prompt de base auquel on ajoute de la mémoire pour qu'il garde l'historique de la conversation, inupt est notre question (humaine) et le blocnotes c'est là où l'agent écrit ses pensées
-prompt = ChatPromptTemplate.from_messages([("system", system_prompt), MessagesPlaceholder(variable_name="chat_history", optional=True),("human", "{input}\n\n{agent_scratchpad}"),])
-
-#on construit l'agent en lui donnant tout
+# On construit l'agent en lui donnant les outils mis à jour
 agent = create_structured_chat_agent(llm, tools, prompt)
 
-# on l"exécute ! 
+# On l'exécute ! 
 agent_executor = AgentExecutor(
     agent=agent, 
     tools=tools, 
@@ -44,12 +44,12 @@ agent_executor = AgentExecutor(
     handle_parsing_errors=True
 )
 
-# Exemple de question pour tester l'agent
-question_test = "Peux-tu lire le fichier 'data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx' et me dire quels machinistes peut conduire la ligne 66 ?"
+
+question_test = "Quels machinistes peuvent conduire la ligne 66 ?"
 
 print("--- Lancement du test de l'agent ---")
 
-# Appel de l'agent
+
 reponse = agent_executor.invoke({"input": question_test})
 
 print("\n--- Réponse finale de l'agent ---")
