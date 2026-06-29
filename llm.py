@@ -7,7 +7,7 @@ from langchain.tools import tool
 
 # Configuration d'Ollama et de l'Agent IA
 
-llm = OllamaLLM(model="llama3", temperature=0)
+llm = OllamaLLM(model="llama3.1", temperature=0)
 
 # Liste des outils mis à disposition de l'agent
 tools = [llmtools.lire_planning_excel]
@@ -44,3 +44,13 @@ agent_executor = AgentExecutor(
     handle_parsing_errors=True
 )
 
+# Exemple de question pour tester l'agent
+question_test = "Peux-tu lire le fichier 'data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx' et me dire quels machinistes peut conduire la ligne 66 ?"
+
+print("--- Lancement du test de l'agent ---")
+
+# Appel de l'agent
+reponse = agent_executor.invoke({"input": question_test})
+
+print("\n--- Réponse finale de l'agent ---")
+print(reponse["output"])

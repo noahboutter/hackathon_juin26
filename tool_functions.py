@@ -22,6 +22,7 @@ def lire_planning_excel(chemin_fichier: str) -> str :
 
 #planning = lire_planning_excel("data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")
 
+@tool
 def get_machinistes(ligne, df=planning_df):
     """Renvoie la liste des machinistes pour une ligne donnée"""
     machinistes = []
