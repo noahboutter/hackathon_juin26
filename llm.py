@@ -1,13 +1,13 @@
 import tool_functions as llmtools
-from langchain_community.llms import Ollama
+from langchain_ollama import OllamaLLM
 from langchain_classic.agents import AgentExecutor, create_structured_chat_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.tools import tool
-@tool
+
 
 # Configuration d'Ollama et de l'Agent IA
 
-llm = Ollama(model="llama3.1", temperature=0)
+llm = OllamaLLM(model="llama3", temperature=0)
 
 # Liste des outils mis à disposition de l'agent
 tools = [llmtools.lire_planning_excel]
