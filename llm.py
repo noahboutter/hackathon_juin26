@@ -13,9 +13,10 @@ llm = OllamaLLM(model="llama3", temperature=0)
 tools = [llmtools.lire_planning_excel]
 
 # Création du prompt pour guider l'agent
-system_prompt = f"""Tu es un expert en ressources humaines et en planification de personnel.
+system_prompt = """Tu es un expert en ressources humaines et en planification de personnel.
 Ton rôle est d'analyser les fichiers de planning, de comprendre les contraintes et d'aider à affecter les agents de manière optimale.
 
+Tu as accès aux outils suivants : {tool_names}
 
 Pour utiliser un outil, tu dois impérativement répondre au format JSON structuré décrit ci-dessous. 
 Tu dois fournir un bloc JSON avec les clés "action" et "action_input".
