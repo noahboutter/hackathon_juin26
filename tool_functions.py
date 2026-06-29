@@ -39,6 +39,6 @@ def get_machinistes_jour(jour,df=planning_df):
             machinistes.append(id)
     return machinistes
 
-print(get_machinistes_jour("12/01/2026"))
+#print(get_machinistes_jour("12/01/2026"))
 
 
