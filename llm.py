@@ -4,7 +4,6 @@ from langchain_classic.agents import AgentExecutor, create_structured_chat_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.tools import tool
 
-@tool
 
 # Configuration d'Ollama et de l'Agent IA
 
