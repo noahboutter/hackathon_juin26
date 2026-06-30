@@ -18,12 +18,7 @@ Règles importantes :
 - Donne des réponses synthétiques et claires, avec les chiffres clés en premier.
 """
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", system_prompt),
-    MessagesPlaceholder(variable_name="chat_history", optional=True),
-    ("human", "{input}"),
-    MessagesPlaceholder(variable_name="agent_scratchpad"),
-])
+prompt = ChatPromptTemplate.from_messages([("system", system_prompt),MessagesPlaceholder(variable_name="chat_history", optional=True),("human", "{input}"),MessagesPlaceholder(variable_name="agent_scratchpad"),])
 
 agent = create_tool_calling_agent(llm, tools, prompt)
 
