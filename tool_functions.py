@@ -43,13 +43,20 @@ def get_machinistes(ligne: int) -> list:
             
     return machinistes
 
-def get_fitting_agents(day: str, deb="00:00", fin="23:59", lines=None) -> str:
+@tool
+def get_fitting_services(day: str, deb="00:00", fin="23:59", lines=None):
+    """
+    get_fitting_service(day: str, deb="00:00", fin="23:59", lines=None)
+
+    Renvoie la liste de services non affectés sur des lignes contenues dans la listes lines le jour day et sur des horaires compris entre deb et fin.  
+
+    """
     day_index = datetime(day).day % 10 - 2
     deb_time = datetime(deb)
     fin_time = datetime(fin)
     df = non_affecte_dfs[day_index]
     mask = (datetime(df['Début']) > deb_time) & (datetime(df["Fin'"]) < fin_time) & (int(df['Service'].str[1:3]) in lines)
-    return df[mask]['Service'].to_string()
+    return df[mask]['Service']
 
 
 
@@ -68,3 +75,7 @@ def get_machinistes_jour(jour: str) -> list:
             machinistes.append(int(row['id']))
             
     return machinistes
+
+@tool
+def worked_hours(id: int):
+    pass
