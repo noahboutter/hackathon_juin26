@@ -1,3 +1,4 @@
+from pydoc import doc
 import re
 import pandas as pd
 from langchain_core.tools import tool
@@ -7,22 +8,25 @@ from langchain_core.tools import tool
 SERVICES_PATH = "data\\Services_Agents_non_affectés_le_12_01_2026.xlsx"
 PLANNING_PATH = "data\\Export_Planning_du_12_01_2026_au_16_01_2026.xlsx"
 
-# Statuts qui signifient explicitement "disponible, pas encore affecté"
-STATUTS_DISPONIBLE = {"ASSU", "CP_REPORT", "DDD","DISPO","DISPO AM", "DISPO AMPL", "DISPO M", "DISPO MX","DISPO N"}
+# Toutes les cases remplies dans l'emploi du temps signifient que le machiniste n'est pas disponible (repos, maladie, etc.),
+# sauf pour les codes suivants, qui signifient que l'agent est disponible :
+STATUTS_DISPONIBLE = {"ASSU", "CP_REPORT", "DDD", "DISPO", "DISPO AM", "DISPO AMPL", "DISPO M", "DISPO MX", "DISPO N"}
 
 # Une cellule comme "L140S004" = un service déjà affecté ce jour-là
-RE_CODE_SERVICE = re.compile(r"^[A-Z]\d{2,3}S\d{3}$")
+RE_CODE_SERVICE = re.compile(r"^[A-Z]\d{2,3}S\d{3}$") # expression régulière pour détecter un code de service
 
-DATE_COLS_CACHE = None  # détecté automatiquement au chargement
-
+# Variable globale contenant la liste des dates (cf fonction _load_planning)
+DATE_COLS_CACHE = None
 
 def _load_services() -> pd.DataFrame:
+    """Charge le fichier des services à affecter en DataFrame pandas."""
     df = pd.read_excel(SERVICES_PATH)
-    df.columns = [str(c).strip() for c in df.columns]
     return df
 
 
 def _load_planning() -> pd.DataFrame:
+    """Charge le fichier planning des machinistes en DataFrame pandas.
+    A aussi pour effet de mettre à jour la variable globale `DATE_COLS_CACHE` avec la liste des colonnes de date."""
     global DATE_COLS_CACHE
     df = pd.read_excel(PLANNING_PATH)
     df.columns = [str(c).strip() for c in df.columns]
@@ -32,14 +36,22 @@ def _load_planning() -> pd.DataFrame:
 
 
 def _ligne_extraite(code_service: str) -> str:
-    """'L140S006' -> '140' ; renvoie '' si le format ne matche pas."""
-    m = re.match(r"^[A-Z](\d{2,3})S\d{3}$", str(code_service).strip())
-    return m.group(1) if m else ""
+    """Renvoie le numéro de ligne du service.\\
+    Les formats peuvent prendre deux formes : LnnnSnnn et MnnnSnnn (où n désigne un entier).
+    Les trois premiers chiffres désignent le numéro de ligne, et les trois derniers le numéro de service.\\
+    Exemple : L140S006 -> ligne 140 service 6"""
+    m = code_service[1:4]
+    if m[0] == "0":
+        m = m[1:]
+    return m
 
 
 def _agent_connait_la_ligne(qualifications: str, ligne: str) -> bool:
+    """Renvoie `True` si l'agent connaît la ligne donnée, `False` sinon."""
+    # Vérifie le type de `qualifications` pour éviter les erreurs
     if not isinstance(qualifications, str):
         return False
+    # Liste des lignes connues par l'agent
     lignes = [l.strip() for l in qualifications.split(",")]
     return ligne in lignes
 
@@ -49,21 +61,23 @@ def _cellule_dispo(valeur) -> bool:
     ou ne contient que des statuts 'disponible' (pas de repos/congé/service déjà pris)."""
     # On découpe s'il y a plusieurs éléments (ex: "DISPO, ASSU")
     parts = [p.strip() for p in str(valeur).split(",")]
+    # S'il y a un élément qui indique que l'agent n'est pas disponible, on renvoie False
     for p in parts:
         if p not in STATUTS_DISPONIBLE:
             return False            
     return True
 
+# ====== Fonctions utilisées comme outils pour le LLM ======
 
 @tool
 def compter_services_par_type(type_service: str) -> str:
     """Compte le nombre de services à affecter pour un type donné.
-    type_service doit être l'un de : MAT, AM, SOI, NUIT (selon les valeurs réelles
+    `type_service` doit être l'un de : MAT, AM, SOI, NUIT (selon les valeurs réelles
     de la colonne Type du fichier services). Exemple : 'MAT' pour les services du matin."""
     try:
         df = _load_services()
         type_service = type_service.strip().upper()
-        nb = (df["Type"].astype(str).str.upper() == type_service).sum()
+        nb = (df["Type"].astype(str).str.upper() == type_service).sum() # Comptage du nombre de services correspondant au type
         total = len(df)
         return f"{nb} service(s) de type '{type_service}' sur {total} services à affecter au total."
     except Exception as e:
@@ -75,7 +89,8 @@ def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
     """Donne la liste des services à affecter qu'un agent pourrait réaliser,
     en vérifiant d'abord ses jours de disponibilité, puis en cherchant les services 
     compatibles avec sa connaissance de ligne sur ces dates.
-    identifiant_agent : l'identifiant numérique de l'agent (ex: '5')."""
+    
+    :identifiant_agent: l'identifiant numérique de l'agent (ex: '5')."""
     try:
         planning = _load_planning()
         services = _load_services()
@@ -87,6 +102,7 @@ def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
 
         row_agent = ligne_agent.iloc[0]
         
+        # Disponibilités de l'agen
         dates_disponibles = set()
         for date_col in DATE_COLS_CACHE:
             if _cellule_dispo(row_agent[date_col]):
@@ -95,13 +111,14 @@ def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
         if not dates_disponibles:
             return f"L'agent {agent_id} n'est disponible sur aucune date du planning actuel."
 
+        # Services disponibles lors des disponibilités de l'agent
         services["date_str"] = pd.to_datetime(services["Date"]).dt.strftime("%d/%m/%Y")
         services_jours_dispos = services[services["date_str"].isin(dates_disponibles)].copy()
 
         if services_jours_dispos.empty:
             return f"L'agent {agent_id} est disponible les {', '.join(sorted(dates_disponibles))}, mais aucun service n'est à pourvoir ces jours-là."
 
-        
+        # Vérification des lignes que peut conduire l'agent
         qualifs = row_agent["Qualification : Connaissance de ligne"]
         lignes_connues = {l.strip() for l in str(qualifs).split(",")}
         
@@ -114,6 +131,7 @@ def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
                 f"mais il ne connaît pas les lignes des services à pourvoir ces jours-là (lignes connues : {', '.join(lignes_connues)})."
             )
 
+        # Résultat final
         liste_services = possibles["Service"].tolist()
         return (
             f"L'agent {agent_id} est disponible aux dates suivantes : {', '.join(sorted(dates_disponibles))}.\n"
@@ -127,7 +145,8 @@ def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
 def lister_conducteurs_disponibles_pour_service(code_service: str, date: str = "") -> str:
     """Donne la liste des conducteurs disponibles pour un service donné (ex: 'L140S006'),
     en vérifiant la connaissance de ligne ET la disponibilité à la date du service.
-    date au format jj/mm/aaaa, optionnel : si non fournie, on prend la date du service
+    
+    :date (optionnel): au format jj/mm/aaaa ; si non fournie, on prend la date du service
     trouvée dans le fichier des services."""
     try:
         services = _load_services()
@@ -138,13 +157,14 @@ def lister_conducteurs_disponibles_pour_service(code_service: str, date: str = "
         if not ligne:
             return f"'{code_service}' ne ressemble pas à un code de service valide (format attendu: L140S006)."
 
+        # Si on n'a pas la date en argument, on la cherche dans le fichier des services
         if not date:
             ligne_service = services[services["Service"].astype(str).str.upper() == code_service]
             if not ligne_service.empty:
                 d = ligne_service.iloc[0]["Date"]
                 date = pd.to_datetime(d).strftime("%d/%m/%Y")
 
-        if date and date not in DATE_COLS_CACHE:
+        if date and (date not in DATE_COLS_CACHE):
             # tentative de reformattage
             try:
                 date = pd.to_datetime(date, dayfirst=True).strftime("%d/%m/%Y")
@@ -186,7 +206,7 @@ def info_agent(identifiant_agent: str) -> str:
             val = row[c]
             val = "—" if pd.isna(val) or str(val).strip() == "" else str(val)
             jours.append(f"{c} : {val}")
-        return f"Agent {agent_id} — lignes connues : {qualifs}\n" + "\n".join(jours)
+        return f"Agent {agent_id} - lignes connues : {qualifs}\n" + "\n".join(jours)
     except Exception as e:
         return f"Erreur lors de la récupération des infos de l'agent {identifiant_agent} : {e}"
 
