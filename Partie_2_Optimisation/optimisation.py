@@ -10,6 +10,13 @@ import datetime
 
 STATUTS_DISPONIBLE = {"ASSU", "CP_REPORT", "DDD","DISPO","DISPO AM", "DISPO AMPL", "DISPO M", "DISPO MX","DISPO N"}
 
+def to_time(x):
+    if isinstance(x, datetime.datetime):
+        return x.time()
+    elif isinstance(x, datetime.time):
+        return x
+    else:
+        return datetime.datetime.strptime(str(x), "%H:%M").time()
 
 def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     """
@@ -57,15 +64,15 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     D = np.zeros((N,P), dtype=np.int8)
     for i in range(N):
         for j in range(P):
-            if not (df_serv['Service'].iloc[j][1:4] in df_mach['qualification'].iloc[i]):
+            if not (int(df_serv['Service'].iloc[j][1:4]) in df_mach['qualification'].iloc[i]):
                 continue
             if pd.isna(df_mach[day].iloc[i]) or (df_mach[day].iloc[i] in STATUTS_DISPONIBLE):
                 D[i, j] = 1
-            elif re.search("DISPO AM",df_mach[day].iloc[i]) and df_serv['Début'].iloc[j] >= datetime.datetime.strptime("12:00", format="%H:%M"):
+            elif re.search("DISPO AM",df_mach[day].iloc[i]) and to_time(df_serv['Début'].iloc[j]) >= to_time(datetime.datetime.strptime("12:00", format="%H:%M")):
                 D[i,j] = 1
-            elif re.search("DISPO M",df_mach[day].iloc[i]) and df_serv['Fin'].iloc[j] <= datetime.datetime.strptime("14:00", format="%H:%M"):
+            elif re.search("DISPO M",df_mach[day].iloc[i]) and to_time(df_serv['Fin'].iloc[j]) <= to_time(datetime.datetime.strptime("14:00", format="%H:%M")):
                 D[i,j] = 1
-            elif re.search("DISPO N",df_mach[day].iloc[i]) and df_serv['Début'].iloc[j] >= datetime.datetime.strptime("15:00", format="%H:%M"):
+            elif re.search("DISPO N",df_mach[day].iloc[i]) and to_time(df_serv['Début'].iloc[j]) >= to_time(datetime.datetime.strptime("15:00", format="%H:%M")):
                 D[i,j] = 1
             elif re.search(r"\bDISPO\b(?!\s*(AM|M|N)\b)", str(df_mach[day].iloc[i])):
                 D[i,j] = 1
