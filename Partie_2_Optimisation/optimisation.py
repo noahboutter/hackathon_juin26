@@ -79,7 +79,7 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     return D
             
     
-
+W=np.ones(len(D),len(D[0]))
 
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
