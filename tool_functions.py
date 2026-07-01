@@ -81,7 +81,6 @@ def worked_hours(id: int):
     """Renvoie le nombre d'heures travaillées par un agent donné (identifié par son id) sur la période du planning.
     Cela suppose qu'un service a été affecté, sinon une erreur est retournée."""
     global planning_df
-    print(planning_df.loc[id])
     if id not in planning_df.index:
         return f"Erreur : Aucun agent avec l'identifiant {id} trouvé dans le planning."
     if planning_df.loc[id, 'H_deb'] == "00:00" and planning_df.loc[id, 'H_fin'] == "00:00 (+1)":
