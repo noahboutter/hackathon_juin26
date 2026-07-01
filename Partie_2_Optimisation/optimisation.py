@@ -58,13 +58,21 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     """
     df_mach = (pd.read_excel(chemin_fichier_mach))[['Identifiant', 'Qualification : Connaissance de ligne', day]]
     df_serv = (pd.read_excel(chemin_fichier_serv)) [['Service', 'Début', 'Fin']]
-    df_mach['qualification'] = df_mach['Qualification : Connaissance de ligne'].apply(lambda y: [int(x) for x in re.findall(r"\d+", y)])
+    df_mach['qualification'] = df_mach['Qualification : Connaissance de ligne'].apply(
+    lambda y: [int(x) for x in re.findall(r"\d+", str(y))] if pd.notna(y) else []
+)
     N = len(df_mach['Identifiant'])
     P = len(df_serv['Service'])
     D = np.zeros((N,P), dtype=np.int8)
     for i in range(N):
         for j in range(P):
-            if not (int(df_serv['Service'].iloc[j][1:4]) in df_mach['qualification'].iloc[i]):
+            service = df_serv['Service'].iloc[j]
+
+            if pd.isna(service):
+                continue
+
+            ligne_service = int(str(service)[1:4])
+            if ligne_service not in df_mach['qualification'].iloc[i]:
                 continue
             if pd.isna(df_mach[day].iloc[i]) or (df_mach[day].iloc[i] in STATUTS_DISPONIBLE):
                 D[i, j] = 1
@@ -79,9 +87,9 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     return D
             
 
-D = initialize_data()
+D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', '12/01/2026')
 
-W=np.ones(len(D),len(D[0]))
+W=np.ones((len(D),len(D[0])))
 
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
