@@ -78,7 +78,9 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
                 D[i,j] = 1
     return D
             
-    
+
+D = initialize_data()
+
 W=np.ones(len(D),len(D[0]))
 
 #on considère qu'on a D et W la 
