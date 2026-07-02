@@ -232,11 +232,11 @@ def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):
     return df
 
 
-#identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant'].tolist() 
-#services = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')['Service'].tolist()
-#num_workers=len(D)
-#num_tasks=len(D[0])
-#df = matrice_vers_dataframe(opti(), num_workers, num_tasks, identifiants, services)
+identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant'].tolist() 
+services = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')['Service'].tolist()
+num_workers=len(D)
+num_tasks=len(D[0])
+df = matrice_vers_dataframe(opti(), num_workers, num_tasks, identifiants, services)
 
 #df.to_excel("resultats.xlsx")
 
@@ -259,8 +259,8 @@ def tri_horaire (chemin_fichier_serv):
 def correction_en_fonction_du_jour_d_avant(df_travail_veille):
     # 1. Initialisation des données
     D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
-                         'Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx','13/01/2026')
-    serv = pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
+                         'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','13/01/2026')
+    serv = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')
     
     D = matrice_vers_dataframe(D1, num_workers, num_tasks, identifiants, serv)
     
