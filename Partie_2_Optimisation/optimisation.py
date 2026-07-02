@@ -109,7 +109,7 @@ def opti():
         solver.Add(solver.Sum([x[i,j] for j in range(num_tasks)]) <=1)
     #chaque tache est assignée a exactement un machiniste
     for j in range(num_tasks):
-        solver.Add(solver.Sum([x[i,j] for i in range(num_workers)]) == 1)
+        solver.Add(solver.Sum([x[i,j] for i in range(num_workers)]) <= 1)
     #chaque machiniste ne peut que faire les tâches pour lesquelles il est accrédité
     for i in range(num_workers):
         for j in range(num_tasks):
