@@ -5,7 +5,14 @@ from langchain_core.tools import tool
 
 
 
-SERVICES_PATH = "data\\Services_Agents_non_affectés_le_12_01_2026.xlsx"
+SERVICES_PATHS = [
+    "data\\Services_Agents_non_affectés_le_12_01_2026.xlsx",
+    "data\\Services_Agents_non_affectés_le_13_01_2026.xlsx",
+    "data\\Services_Agents_non_affectés_le_14_01_2026.xlsx",
+    "data\\Services_Agents_non_affectés_le_15_01_2026.xlsx",
+    "data\\Services_Agents_non_affectés_le_16_01_2026.xlsx",
+]
+
 PLANNING_PATH = "data\\Export_Planning_du_12_01_2026_au_16_01_2026.xlsx"
 
 # Toutes les cases remplies dans l'emploi du temps signifient que le machiniste n'est pas disponible (repos, maladie, etc.),
@@ -20,8 +27,12 @@ DATE_COLS_CACHE = None
 
 def _load_services() -> pd.DataFrame:
     """Charge le fichier des services à affecter en DataFrame pandas."""
-    df = pd.read_excel(SERVICES_PATH)
-    return df
+    frames = []
+    for path in SERVICES_PATHS:
+        df = pd.read_excel(path)
+        df.columns = [str(c).strip() for c in df.columns]
+        frames.append(df)
+    return pd.concat(frames, ignore_index=True)
 
 
 def _load_planning() -> pd.DataFrame:
@@ -66,6 +77,7 @@ def _cellule_dispo(valeur) -> bool:
         if p not in STATUTS_DISPONIBLE:
             return False            
     return True
+
 
 # ====== Fonctions utilisées comme outils pour le LLM ======
 
@@ -143,10 +155,12 @@ def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
 
 @tool
 def lister_conducteurs_disponibles_pour_service(code_service: str, date: str = "") -> str:
-    """Donne la liste des conducteurs disponibles pour un service donné (ex: 'L140S006'),
+    """À UTILISER UNIQUEMENT POUR UN SERVICE PRÉCIS ET NON POUR UNE LIGNE.
+    Donne la liste des conducteurs disponibles pour un service donné (ex: 'L140S006'),
     en vérifiant la connaissance de ligne ET la disponibilité à la date du service.
-    
-    :date (optionnel): au format jj/mm/aaaa ; si non fournie, on prend la date du service
+
+    code_service: DOIT obligatoirement contenir la lettre 'S' (format attendu: L140S006, L066S012). Ne jamais utiliser cet outil si l'utilisateur donne juste un numéro de ligne.
+    date (optionnel): au format jj/mm/aaaa ; si non fournie, on prend la date du service
     trouvée dans le fichier des services."""
     try:
         services = _load_services()
@@ -188,6 +202,41 @@ def lister_conducteurs_disponibles_pour_service(code_service: str, date: str = "
     except Exception as e:
         return f"Erreur lors de la recherche de conducteurs pour {code_service} : {e}"
 
+@tool
+def lister_conducteurs_disponibles_pour_ligne(numero_ligne: str, date: str = "") -> str:
+    """À UTILISER UNIQUEMENT QUAND L'UTILISATEUR PARLE D'UNE LIGNE ENTIÈRE (ex: 'ligne 66').
+    Compte le nombre d'agents qualifiés ET disponibles pour conduire une ligne donnée.
+    
+    numero_ligne : UNIQUEMENT le numéro de la ligne en chiffres, ex '66', '140' ou '238'. (Ne jamais mettre de 'L' ou de 'S' ici).
+    date au format jj/mm/aaaa (optionnel) : si non fournie, on prend la première date du planning."""
+    try:
+        planning = _load_planning()
+        ligne = numero_ligne.strip()
+ 
+        if not date:
+            date = DATE_COLS_CACHE[0]
+        elif date not in DATE_COLS_CACHE:
+            try:
+                date = pd.to_datetime(date, dayfirst=True).strftime("%d/%m/%Y")
+            except Exception:
+                pass
+ 
+        if date not in DATE_COLS_CACHE:
+            return (f"Date '{date}' introuvable dans le planning. "
+                    f"Dates disponibles : {', '.join(DATE_COLS_CACHE)}")
+ 
+        candidats = []
+        for _, row in planning.iterrows():
+            if _agent_connait_la_ligne(row["Qualification : Connaissance de ligne"], ligne):
+                if _cellule_dispo(row[date]):
+                    candidats.append(str(row["Identifiant"]))
+ 
+        if not candidats:
+            return f"Aucun agent qualifié ligne {ligne} et disponible le {date}."
+            
+        return f"{len(candidats)} agent(s) qualifié(s) ligne {ligne} et disponible(s) le {date} : {', '.join(candidats)}."
+    except Exception as e:
+        return f"Erreur lors de la recherche des agents disponibles pour la ligne {numero_ligne} : {e}"
 
 @tool
 def info_agent(identifiant_agent: str) -> str:
@@ -222,6 +271,33 @@ def compter_services_non_couverts() -> str:
         return f"{len(df)} service(s) restent non affectés au total."
     except Exception as e:
         return f"Erreur lors du comptage des services non couverts : {e}"
+    
+@tool
+def compter_agents_par_statut(statut: str, date: str) -> str:
+    """Compte ET liste les agents qui ont un statut spécifique (ex: 'CP', 'MAL', 'R') à une date donnée.
+    date: format jj/mm/aaaa."""
+    try:
+        planning = _load_planning()
+        statut = statut.strip().upper()
+        
+        if date not in DATE_COLS_CACHE:
+            return f"Date '{date}' introuvable. Dates possibles : {', '.join(DATE_COLS_CACHE)}"
+            
+        agents_concernes = []
+        for _, row in planning.iterrows():
+            # Une cellule peut contenir plusieurs statuts séparés par des virgules
+            valeur_cellule = str(row[date]).upper()
+            statuts_cellule = [s.strip() for s in valeur_cellule.split(",")]
+            if statut in statuts_cellule:
+                agents_concernes.append(str(row["Identifiant"]))
+                
+        if not agents_concernes:
+            return f"Il n'y a aucun agent avec le statut '{statut}' le {date}."
+            
+        return f"Il y a {len(agents_concernes)} agent(s) avec le statut '{statut}' le {date} : {', '.join(agents_concernes)}."
+    except Exception as e:
+        return f"Erreur lors de la recherche par statut : {e}"
+
 
 
 TOOLS = [
@@ -230,4 +306,6 @@ TOOLS = [
     lister_conducteurs_disponibles_pour_service,
     info_agent,
     compter_services_non_couverts,
+    lister_conducteurs_disponibles_pour_ligne,
+    compter_agents_par_statut,
 ]
