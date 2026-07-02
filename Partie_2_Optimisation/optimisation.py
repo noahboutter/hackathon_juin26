@@ -262,9 +262,16 @@ def correction_en_fonction_du_jour_d_avant(df_travail_veille):
     tri_hier=tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')
     for i in df_travail_veille['identifiants']:
         test=df['service'].loc[i]
-        if test.isin(tri_ajd[1]['Service']):
-            if D['Service'].loc['identifiant'==i].isin(tri_ajd[0]['Service']):
-                D1[][int(i)]
+        if test.isin(tri_hier[1]['Service']):
+            D[D['Service'].isin(tri_ajd[0]['Service'])].loc['identifiant'==i]=0
+            D[D['Service'].isin(tri_ajd[3]['Service'])].loc['identifiant'==i]=0
+        if test.isin(tri_hier[2]['Service']):
+            D[D['Service'].isin(tri_ajd[0]['Service'])].loc['identifiant'==i]=0
+            D[D['Service'].isin(tri_ajd[3]['Service'])].loc['identifiant'==i]=0
+            D[D['Service'].isin(tri_ajd[4]['Service'])].loc['identifiant'==i]=0
+    return (D.to_numpy())
+        
+                
 
         
         
