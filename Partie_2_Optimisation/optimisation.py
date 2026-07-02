@@ -167,9 +167,9 @@ def W_initialize(chemin_fichier_pref: str,chemin_fichier_serv: str, dim, D):
             
 
 
-W = W_initialize("Partie_1_LLM/data/preferences_machinistes.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', (len(D), len(D[0])), D)
+W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', (len(D), len(D[0])), D)
 
-W=np.ones((len(D),len(D[0])))
+#W=np.ones((len(D),len(D[0])))
 
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
