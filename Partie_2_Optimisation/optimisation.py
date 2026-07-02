@@ -215,7 +215,7 @@ def opti():
     #else:
         #print("No solution found.")
     return y
-x=opti()
+#x=opti()
 def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):  
     #affectations = [[int(x[i, j].solution_value() > 0.5) for j in range(num_tasks)]for i in range(num_workers)]  
     df = pd.DataFrame(x, index=identifiants, columns=services)
@@ -227,7 +227,22 @@ identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au
 services = pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')['Service'].tolist()
 num_workers=len(D)
 num_tasks=len(D[0])
-df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
- 
-df.to_excel("resultats.xlsx")
+#df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
+
+#df.to_excel("resultats.xlsx")
+
+#on va retrouver qui fait des services de nuit et les aprèms
+# on cherche les services de nuit et de l'aprèm
+
+def tri_horaire (chemin_fichier_serv):
+    df_serv = (pd.read_excel(chemin_fichier_serv)) [['Service', 'Début', 'Fin','Type']]
+    P = len(df_serv['Service'])
+    matin=df_serv[(df_serv['Fin']<str(14) )& (df_serv['Début']<str(14))]
+    
+    aprem=df_serv[(df_serv['Fin']<str(22) )& (df_serv['Début']>str(14))]
+    nuit=df_serv[(df_serv['Fin']>str(22) )|(df_serv['Fin']<str(5))]
+    coupure=df_serv[df_serv['Type']=='COUP']
+    mixte=df_serv[(df_serv['Fin']>str(14) )& (df_serv['Début']<str(11))]
+    return (matin,aprem,nuit,coupure,mixte)
+    
 
