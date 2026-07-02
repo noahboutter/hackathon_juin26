@@ -236,6 +236,7 @@ identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au
 services = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')['Service'].tolist()
 num_workers=len(D)
 num_tasks=len(D[0])
+x=opti()
 df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
 
 #df.to_excel("resultats.xlsx")
@@ -254,25 +255,47 @@ def tri_horaire (chemin_fichier_serv):
     mixte=df_serv[(df_serv['Fin']>str(14) )& (df_serv['Début']<str(11))]
     return (matin,aprem,nuit,coupure,mixte)
 
+
+
 def correction_en_fonction_du_jour_d_avant(df_travail_veille):
-    D1=initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",'Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
-    serv=pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
-    D=matrice_vers_dataframe(D1,num_workers,num_tasks,identifiants,serv)
-    tri_ajd=tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
-    tri_hier=tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')
+    # 1. Initialisation des données
+    D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
+                         'Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx','13/01/2026')
+    serv = pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
+    
+    D = matrice_vers_dataframe(D1, num_workers, num_tasks, identifiants, serv)
+    
+    tri_ajd = tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
+    tri_hier = tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')
+    
+    # 2. Parcours des agents de la veille
     for i in df_travail_veille['identifiants']:
-        test=df['service'].loc[i]
-        if test.isin(tri_hier[1]['Service']):
-            D[D['Service'].isin(tri_ajd[0]['Service'])].loc['identifiant'==i]=0
-            D[D['Service'].isin(tri_ajd[3]['Service'])].loc['identifiant'==i]=0
-        if test.isin(tri_hier[2]['Service']):
-            D[D['Service'].isin(tri_ajd[0]['Service'])].loc['identifiant'==i]=0
-            D[D['Service'].isin(tri_ajd[3]['Service'])].loc['identifiant'==i]=0
-            D[D['Service'].isin(tri_ajd[4]['Service'])].loc['identifiant'==i]=0
-    return (D.to_numpy())
+        # On suppose que l'identifiant est l'index de df_travail_veille
+        # et qu'il y a une colonne 'service'
+        if i in df_travail_veille.index:
+            test = df_travail_veille.loc[i, 'service']
+        else:
+            continue # Si l'identifiant n'est pas trouvé, on passe au suivant
+            
+        # Conversion des services en listes/sets pour accélérer la recherche avec 'in'
+        services_hier_1 = tri_hier[1]['Service'].values
+        services_hier_2 = tri_hier[2]['Service'].values
+        
+        # Conditions et modifications directes dans D
+        if test in services_hier_1:
+            services_a_bloquer = pd.concat([tri_ajd[0]['Service'], tri_ajd[3]['Service']])
+            mask = (D['Service'].isin(services_a_bloquer)) & (D['identifiant'] == i)
+            D.loc[mask, :] = 0
+            
+        elif test in services_hier_2:
+            services_a_bloquer = pd.concat([tri_ajd[0]['Service'], tri_ajd[3]['Service'], tri_ajd[4]['Service']])
+            mask = (D['Service'].isin(services_a_bloquer)) & (D['identifiant'] == i)
+            D.loc[mask, :] = 0
+            
+    return D.to_numpy()
         
                 
-
+print(correction_en_fonction_du_jour_d_avant(df))
         
         
 
