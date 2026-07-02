@@ -39,3 +39,4 @@ Puis exécuter via :
 ```bash
 streamlit run "Partie_1_LLM/interface.py"
 ```
+## 2. Optimisation
