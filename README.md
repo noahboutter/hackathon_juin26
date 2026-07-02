@@ -27,3 +27,15 @@ Le chatbot est apte à répondre aux types de questions suivantes :
 - Quelles sont les lignes connues par l'agent 458 ?
 - Quels services sont pour l'instant affectés à l'agent 389 ?
 - Combien de services n'ont pas été affectés ?
+
+### Interface web
+
+Pour l'exécuter, il faut avoir le module `streamlit`
+```bash
+pip install streamlit
+```
+
+Puis exécuter via : 
+```bash
+streamlit run "Partie_1_LLM/interface.py"
+```

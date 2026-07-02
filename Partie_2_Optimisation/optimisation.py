@@ -47,9 +47,9 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     Les statuts considérés comme disponibles sont :
     - une cellule vide / NaN ;
     - un statut appartenant à STATUTS_DISPONIBLE ;
-    - "DISPO AM" si le service commence à partir de 12h00 ;
+    - "DISPO AM" si le service commence à partir de 14h00 ;
     - "DISPO M" si le service finit avant ou à 14h00 ;
-    - "DISPO N" si le service commence à partir de 15h00 ;
+    - "DISPO N" si le service finit après 22h ;
     - "DISPO" sans précision horaire.
 
     La fonction renvoie uniquement la matrice D.
@@ -80,7 +80,7 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
                 D[i,j] = 1
             elif re.search("DISPO M",df_mach[day].iloc[i]) and to_time(df_serv['Fin'].iloc[j]) <= to_time(datetime.datetime.strptime("14:00", format="%H:%M")):
                 D[i,j] = 1
-            elif re.search("DISPO N",df_mach[day].iloc[i]) and to_time(df_serv['Début'].iloc[j]) >= to_time(datetime.datetime.strptime("15:00", format="%H:%M")):
+            elif re.search("DISPO N",df_mach[day].iloc[i]) and (to_time(df_serv['Fin'].iloc[j]) >= to_time(datetime.datetime.strptime("22:00", format="%H:%M")) or to_time(df_serv['Fin'].iloc[j]) <= to_time(datetime.datetime.strptime("05:00", format="%H:%M"))):
                 D[i,j] = 1
             elif re.search(r"\bDISPO\b(?!\s*(AM|M|N)\b)", str(df_mach[day].iloc[i])):
                 D[i,j] = 1
@@ -88,6 +88,86 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
             
 
 D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', '12/01/2026')
+
+def type_service(df, j):
+    pass
+
+def W_initialize(chemin_fichier_pref: str,chemin_fichier_serv: str, dim, D):
+    """
+    Initialise la matrice de pondération W associée aux affectations machinistes-services.
+
+    Paramètres
+    ----------
+    chemin_fichier_pref : str
+        Chemin vers le fichier Excel contenant les préférences des machinistes.
+        Le fichier doit contenir au minimum :
+        - une colonne "préférence_ligne" ;
+        - une colonne "préférence_horaire".
+
+        La colonne "préférence_ligne" contient les numéros de lignes préférées,
+        par exemple "123, 456, 789".
+        L'ordre des lignes est interprété comme un ordre de préférence :
+        les premières lignes sont les plus préférées.
+
+        La colonne "préférence_horaire" contient les types d'horaires préférés,
+        par exemple "MAT, AM, JOUR, COUP, NUIT".
+        L'ordre est également interprété comme un ordre de préférence.
+
+    chemin_fichier_serv : str
+        Chemin vers le fichier Excel contenant les services.
+        Le fichier doit contenir au minimum :
+        - une colonne "Service" ;
+        - une colonne "Début" ;
+        - une colonne "Fin" ;
+        - une colonne "Type", ou les informations nécessaires à la fonction type_service.
+
+    dim : tuple
+        Dimensions de la matrice W sous la forme (N, P), où :
+        - N est le nombre de machinistes ;
+        - P est le nombre de services.
+
+    D : np.ndarray
+        Matrice de faisabilité de dimension (N, P).
+        D[i, j] vaut 1 si le machiniste i peut faire le service j,
+        et 0 sinon.
+
+    Retour
+    ------
+    W : np.ndarray
+        Matrice de pondération de dimension (N, P).
+        Pour les affectations faisables, W[i, j] est ajustée selon :
+        - les préférences de ligne du machiniste ;
+        - les préférences horaires du machiniste.
+
+        Les affectations non faisables ne sont pas modifiées dans W.
+        Elles doivent donc être interdites séparément par la matrice D
+        dans le modèle d'optimisation.
+    """
+
+    coef_ligne = 1
+    coef_horaire = 3
+    coef_existence = 12
+    W = coef_existence * np.ones(dim)
+    df_pref = pd.read_excel(chemin_fichier_pref)
+    df_serv = pd.read_excel(chemin_fichier_serv)
+    N, P = dim
+    for i in range(N):
+        liste_ligne = [int(x) for x in re.findall(r"\d+", str(df_pref['préférence_ligne'].iloc[i]))] if pd.notna(df_pref['préférence_ligne'].iloc[i]) else []
+        liste_horaire = [x for x in re.findall(r"JOUR|AM|MAT|COUP|NUIT", str(df_pref['préférence_horaire'].iloc[i]))] if pd.notna(df_pref['préférence_horaire'].iloc[i]) else []
+        increment_ligne = 1 / (len(liste_ligne) if len(liste_ligne) != 0 else 1)
+        increment_horaire = 1 / (len(liste_horaire) if len(liste_horaire) != 0 else 1)
+        for j in range(P):
+            if D[i,j] == 0:
+                continue
+            index_ligne = liste_ligne.index(int(df_serv['Service'].iloc[j][1:4]))
+            index_horaire = liste_horaire.index(type_service(df_serv, j))
+            W[i,j] += coef_ligne * (0.5 + ((len(liste_ligne) if len(liste_ligne) != 0 else 1) - index_ligne) * increment_ligne) + coef_horaire * coef_horaire * (0.5 + (len(liste_horaire) - index_horaire) * increment_horaire)
+    return W
+
+            
+
+
+W = W_initialize("Partie_1_LLM/data/preferences_machinistes.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', (len(D), len(D[0])), D)
 
 W=np.ones((len(D),len(D[0])))
 
