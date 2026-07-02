@@ -227,7 +227,7 @@ identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au
 services = pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')['Service'].tolist()
 num_workers=len(D)
 num_tasks=len(D[0])
-#df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
+df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
 
 #df.to_excel("resultats.xlsx")
 
@@ -244,5 +244,22 @@ def tri_horaire (chemin_fichier_serv):
     coupure=df_serv[df_serv['Type']=='COUP']
     mixte=df_serv[(df_serv['Fin']>str(14) )& (df_serv['Début']<str(11))]
     return (matin,aprem,nuit,coupure,mixte)
+
+def correction_en_fonction_du_jour_d_avant(df_travail_veille):
+    D1=initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",'Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
+    serv=pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
+    D=matrice_vers_dataframe(D1,num_workers,num_tasks,identifiants,serv)
+    tri_ajd=tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
+    tri_hier=tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')
+    for i in df_travail_veille['identifiants']:
+        test=df['service'].loc[i]
+        if test.isin(tri_ajd[1]['Service']):
+            if D['Service'].loc['identifiant'==i].isin(tri_ajd[0]['Service']):
+                D1[][int(i)]
+
+        
+        
+
+
     
 
