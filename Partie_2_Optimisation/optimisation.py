@@ -94,9 +94,11 @@ W=np.ones((len(D),len(D[0])))
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
 def opti():
+    
     costs=W
     num_workers=len(D)
     num_tasks=len(D[0])
+    y=np.zeros((num_workers,num_tasks))
     solver= pywraplp.Solver.CreateSolver("SCIP")
     if not solver:
         return
@@ -128,6 +130,24 @@ def opti():
             for j in range(num_tasks):
                 # Test if x[i,j] is 1 (with tolerance for floating point arithmetic).
                 if x[i, j].solution_value() > 0.5:
-                    print(f"Worker {i} assigned to task {j}." + f" Cost: {costs[i][j]}")
-    else:
-        print("No solution found.")
+                    y[i,j]=1
+                    #print(f"Worker {i} assigned to task {j}." + f" Cost: {costs[i][j]}")
+    #else:
+        #print("No solution found.")
+    return y
+x=opti()
+def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):  
+    #affectations = [[int(x[i, j].solution_value() > 0.5) for j in range(num_tasks)]for i in range(num_workers)]  
+    df = pd.DataFrame(x, index=identifiants, columns=services)
+    print (df) 
+    return df
+
+
+identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant'].tolist() 
+services = pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')['Service'].tolist()
+num_workers=len(D)
+num_tasks=len(D[0])
+df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
+ 
+df.to_excel("resultats.xlsx")
+
