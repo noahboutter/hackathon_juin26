@@ -87,10 +87,19 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     return D
             
 
-D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', '12/01/2026')
+D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx', '12/01/2026')
 
 def type_service(df, j):
-    pass
+    if (df['Type'].iloc[j]) != None and isinstance(df['Type'].iloc[j],str) :
+        return df['Type'].iloc[j]
+    elif to_time(df['Fin'].iloc[j]) <= to_time(datetime.datetime.strptime("14:00","%H:%M")):
+        return 'MAT'
+    elif to_time(df['Fin'].iloc[j]) >= to_time(datetime.datetime.strptime("22:00","%H:%M")) or to_time(df['Fin'].iloc[j]) <= to_time(datetime.datetime.strptime("05:00","%H:%M")):
+        return 'NUIT'
+    elif to_time(df['Début'].iloc[j]) >= to_time(datetime.datetime.strptime("14:00","%H:%M")):
+        return 'AM'
+    else:
+        return 'JOUR'
 
 def W_initialize(chemin_fichier_pref: str,chemin_fichier_serv: str, dim, D):
     """
@@ -167,9 +176,9 @@ def W_initialize(chemin_fichier_pref: str,chemin_fichier_serv: str, dim, D):
             
 
 
-W = W_initialize("Partie_1_LLM/data/preferences_machinistes.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', (len(D), len(D[0])), D)
+W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx', (len(D), len(D[0])), D)
 
-W=np.ones((len(D),len(D[0])))
+#W=np.ones((len(D),len(D[0])))
 
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
@@ -224,7 +233,7 @@ def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):
 
 
 identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant'].tolist() 
-services = pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')['Service'].tolist()
+services = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')['Service'].tolist()
 num_workers=len(D)
 num_tasks=len(D[0])
 df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
@@ -262,4 +271,5 @@ def correction_en_fonction_du_jour_d_avant(df_travail_veille):
 
 
     
-
+mat_result = opti()
+df_res = matrice_vers_dataframe(mat_result)
