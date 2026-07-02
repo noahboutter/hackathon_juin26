@@ -241,7 +241,9 @@ def lister_conducteurs_disponibles_pour_ligne(numero_ligne: str, date: str = "")
 @tool
 def info_agent(identifiant_agent: str) -> str:
     """Donne les informations générales d'un agent : lignes connues et statut/affectation
-    pour chaque jour de la semaine de planning. identifiant_agent : ex '5'."""
+    pour chaque jour de la semaine de planning.
+    
+    :identifiant_agent: ex '5'   """
     try:
         planning = _load_planning()
         agent_id = int(identifiant_agent)
