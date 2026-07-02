@@ -26,6 +26,6 @@ if prompt :
     output = reponse["output"]
     st.session_state.history.append({"role": "assistant", "content": output})
 
-message = st.session_state.history[-1]
-with st.chat_message(message["role"]):
-    st.write(message["content"])
+    message = st.session_state.history[-1]
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
