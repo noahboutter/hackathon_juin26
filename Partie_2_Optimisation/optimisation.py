@@ -232,11 +232,11 @@ def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):
     return df
 
 
-identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant'].tolist() 
-services = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')['Service'].tolist()
-num_workers=len(D)
-num_tasks=len(D[0])
-#df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
+#identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant'].tolist() 
+#services = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')['Service'].tolist()
+#num_workers=len(D)
+#num_tasks=len(D[0])
+#df = matrice_vers_dataframe(opti(), num_workers, num_tasks, identifiants, services)
 
 #df.to_excel("resultats.xlsx")
 
@@ -254,5 +254,46 @@ def tri_horaire (chemin_fichier_serv):
     mixte=df_serv[(df_serv['Fin']>str(14) )& (df_serv['Début']<str(11))]
     return (matin,aprem,nuit,coupure,mixte)
     
-mat_result = opti()
-df_res = matrice_vers_dataframe(mat_result)
+res = opti()
+
+#On crée une fonction qui va update le planning excel de la semaine
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+
+def update_planning(day):
+    df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx")) [['Service', 'Début', 'Fin']]
+    wb = load_workbook("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")
+    ws = wb.active
+    numero_colonne = None
+
+    for cell in ws[1]:  # ligne 1 = ligne des titres
+        if cell.value == day:
+            numero_colonne = cell.column
+            break
+
+    vert = PatternFill(
+        start_color="92D050",
+        end_color="92D050",
+        fill_type="solid"
+    )
+
+    rouge = PatternFill(
+        start_color="FF0000",
+        end_color="FF0000",
+        fill_type="solid"
+    )
+    jaune_pastel = PatternFill(
+    start_color="FFF2CC",
+    end_color="FFF2CC",
+    fill_type="solid"
+    )
+
+    for i in range(len(D)):
+        if np.any(res[i,:]):
+            index_serv = np.where(res[i,:])
+            service_name = df_serv['Service'].iloc[index_serv]
+            cellule= ws.cell(row=i + 2, column=numero_colonne)
+            cellule.value= (str(service_name))[7:7+8]
+            cellule.fill = jaune_pastel
+
+    wb.save(f"planning_du_{day.replace("/","_")}_updated.xlsx")
