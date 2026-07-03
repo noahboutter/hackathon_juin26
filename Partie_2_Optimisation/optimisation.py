@@ -243,7 +243,7 @@ def opti(D,W):
                 # Test if x[i,j] is 1 (with tolerance for floating point arithmetic).
                 if x[i, j].solution_value() > 0.5:
                     y[i,j]=1
-                    print(f'machiniste{i} fait le service{j}')
+                    #print(f'machiniste{i} fait le service{j}')
                     #print(f"Worker {i} assigned to task {j}." + f" Cost: {costs[i][j]}")
     #else:
         #print("No solution found.")
@@ -352,7 +352,7 @@ D15=correction_en_fonction_du_jour_d_avant(df14,len(D),len((pd.read_excel('Parti
 W15 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx', (len(D15), len(D15[0])), D15)
 services15 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx')['Service'].tolist()
 df15 = matrice_vers_dataframe(opti(D15,W15), num_workers,len(D15[0]) , identifiants, services15)
-df15.to_excel("resultats14.xlsx")
+df15.to_excel("resultats15.xlsx")
 
 #on fait le 16
 
@@ -367,8 +367,11 @@ df16.to_excel("resultats16.xlsx")
 
 
     
-res = opti(W,D)
-
+res = opti(D,W)
+res13=opti(D13,W13)
+res14=opti(D14,W14)
+res15=opti(D15,W15)
+res16=opti(D16,W16)
 #On crée une fonction qui va update le planning excel de la semaine
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
@@ -435,7 +438,7 @@ def create_liste_non_affecté(mat_res, day):
 def main(day):
     D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx", day)
     W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx", (len(D), len(D[0])), D)
-    mat_res = opti(W,D)
+    mat_res = opti(D,W)
 
     update_planning(mat_res,day)
     dico_mach = {day: create_dico_affectés(mat_res,day)}
