@@ -77,8 +77,9 @@ L'algorithme calcule ici l'affectation optimale sur l'ensemble du planning, en m
 
 **Installation et Exécution :**
 Assurez vous d'avoir les fichiers de données requis dans Partie_1_LLM/data/ :
-    - Export_Planning_du_12_01_2026_au_16_01_2026.xlsx (planning des machinistes)
-    - un fichier Services_Agents_non_affectés_le_JJ_MM_AAAA.xlsx par jour à traiter
+- Export_Planning_du_12_01_2026_au_16_01_2026.xlsx (planning des machinistes)
+- un fichier Services_Agents_non_affectés_le_JJ_MM_AAAA.xlsx par jour à traiter
+
 Mais aussi:
-    - preferences_agents.xlsx dans Partie_2_Optimisation/ (préférences de ligne et d'horaire).
-    mise à jour du planning Excel via optimisation.update_planning ;
+- preferences_agents.xlsx dans Partie_2_Optimisation/ (préférences de ligne et d'horaire).
+- il y aura une mise à jour du planning Excel via optimisation.update_planning ;
