@@ -80,5 +80,9 @@ Placer les fichiers de données requis dans Partie_1_LLM/data/ :
     - Export_Planning_du_12_01_2026_au_16_01_2026.xlsx (planning des machinistes),
     - un fichier Services_Agents_non_affectés_le_JJ_MM_AAAA.xlsx par jour à traiter,
     -preferences_agents.xlsx dans Partie_2_Optimisation/ (préférences de ligne et d'horaire).
-    - résolution du problème d'affectation via optimisation.opti ;
-    mise à jour du planning Excel via optimisation.update_planning ;
+ 
+Lancement du programme
+    ```bash
+    Partie_2_Optimisation/opti.py
+Récupération des données
+    -l'emplois du temps se trouve dans le tableau excel: Export_Planning_du_12_01_2026_au_16_01_2026.xlsx

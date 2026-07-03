@@ -4,3 +4,4 @@ openpyxl
 langchain
 langchain-core
 langchain-ollama
+ortools
