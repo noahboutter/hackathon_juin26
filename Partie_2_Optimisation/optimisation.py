@@ -378,7 +378,7 @@ res = opti()
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 
-def update_planning(day):
+def update_planning(res,day):
     df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx")) [['Service', 'Début', 'Fin']]
     wb = load_workbook("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")
     ws = wb.active
