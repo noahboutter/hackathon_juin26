@@ -76,7 +76,6 @@ L'algorithme calcule ici l'affectation optimale sur l'ensemble du planning, en m
 - OpenPyXL : mise à jour du fichier de planning Excel avec coloration conditionnelle des cellules affectées
 
 **Installation et Exécution :**
-<<<<<<< HEAD
 Placer les fichiers de données requis dans Partie_1_LLM/data/ :
     - Export_Planning_du_12_01_2026_au_16_01_2026.xlsx (planning des machinistes),
     - un fichier Services_Agents_non_affectés_le_JJ_MM_AAAA.xlsx par jour à traiter,
@@ -86,12 +85,4 @@ Lancement du programme
     ```bash
     Partie_2_Optimisation/opti.py
 Récupération des données
-    -l'emplois du temps se trouve dans le tableau excel: Export_Planning_du_12_01_2026_au_16_01_2026.xlsx
-=======
-Assurez vous d'avoir les fichiers de données requis dans Partie_1_LLM/data/ :
-    - Export_Planning_du_12_01_2026_au_16_01_2026.xlsx (planning des machinistes)
-    - un fichier Services_Agents_non_affectés_le_JJ_MM_AAAA.xlsx par jour à traiter
-Mais aussi:
-    - preferences_agents.xlsx dans Partie_2_Optimisation/ (préférences de ligne et d'horaire).
-    mise à jour du planning Excel via optimisation.update_planning ;
->>>>>>> 0f515a83c17a34693fb4d08849735a8f8fb930c5
+    - La fonction main(day : str) du fichier optimisation.py permet de générer les plannings pour toute la semaine à partir du jour day et jusqu'à la fin de la semaine. day doit être sous la forme "dd/mm/yyyy". Les emplois du temps de chaque jours sont crées dans des fichiers excels dont le nom est sous la forme "planning_du_dd/mm/yyyy_updated.xlsx". Les postes attribués sont représentés en fond jaune pastel dans le excel. 
