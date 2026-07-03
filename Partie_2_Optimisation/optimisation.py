@@ -409,7 +409,7 @@ res = opti(D,W)
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 
-def update_planning(day):
+def update_planning(res,day):
     df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx")) [['Service', 'Début', 'Fin']]
     wb = load_workbook("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")
     ws = wb.active
@@ -446,3 +446,31 @@ def update_planning(day):
             cellule.fill = jaune_pastel
 
     wb.save(f"planning_du_{day.replace("/","_")}_updated.xlsx")
+
+
+def create_dico_affectés(mat_res, day):
+    ans = []
+    df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx")) [['Service', 'Début', 'Fin']]
+    df_mach =  pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant']
+    N = len(df_mach)
+    for i in range(N):
+        if np.any(mat_res[i, :]):
+            j = np.where(mat_res[i,:] == 1)
+            ans.append({"agent": str(df_mach['Identifiant'].iloc[i]), "service": str(df_serv['Service'].iloc[j])})
+    return ans
+
+def create_liste_non_affecté(mat_res, day):
+    ans = []
+    df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx")) [['Service', 'Début', 'Fin']]
+    P = len(df_serv)
+    for j in range(P):
+        if not np.any(mat_res[:,j]):
+            ans.append(df_serv['Service'].iloc[j])
+    return ans
+
+
+
+
+
+
+
