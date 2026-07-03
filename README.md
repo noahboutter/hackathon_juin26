@@ -59,3 +59,10 @@ streamlit run Partie_1_LLM/interface.py
 (Vous pouvez également tester la version console en exécutant python Partie_1_LLM/main.py)
 
 ## Partie 2 : Algorithme d'Optimisation
+L'algorithme calcule ici l'affectation optimale sur l'ensemble du planning, en maximisant la satisfaction des préférences des agents tout en respectant strictement les contraintes de qualification, de disponibilité et de repos.
+
+**Stack technique :**
+
+**Installation et Exécution :**
+- OR-Tools (solveur SCIP) : résolution du problème d'affectation par optimisation linéaire (pywraplp)
+- OpenPyXL : mise à jour du fichier de planning Excel avec coloration conditionnelle des cellules affectées
