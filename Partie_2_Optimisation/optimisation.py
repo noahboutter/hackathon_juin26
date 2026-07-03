@@ -432,6 +432,14 @@ def create_liste_non_affecté(mat_res, day):
             ans.append(df_serv['Service'].iloc[j])
     return ans
 
+def main(day):
+    D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx", day)
+    W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx", (len(D), len(D[0])), D)
+    mat_res = opti(W,D)
+
+    update_planning(mat_res,day)
+    dico_mach = {day: create_dico_affectés(mat_res,day)}
+    liste_serv = {day: create_liste_non_affecté(mat_res, day)}
 
 
 
