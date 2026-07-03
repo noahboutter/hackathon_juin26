@@ -243,14 +243,12 @@ def opti(D,W):
                 # Test if x[i,j] is 1 (with tolerance for floating point arithmetic).
                 if x[i, j].solution_value() > 0.5:
                     y[i,j]=1
-                    print(f"machiniste{i} fait le service{j}")
-                    #print(f"Worker {i} assigned to task {j}." + f" Cost: {costs[i][j]}")
+                    #print(f'machiniste{i} fait le service{j}')
     #else:
         #print("No solution found.")
     return y
-#x=opti()
-def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):  
-    #affectations = [[int(x[i, j].solution_value() > 0.5) for j in range(num_tasks)]for i in range(num_workers)]  
+
+def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):    
     df = pd.DataFrame(x, index=identifiants, columns=services)
     print (df) 
     return df
@@ -288,7 +286,7 @@ def tri_horaire(chemin_fichier_serv):
     return (matin, aprem, nuit, coupure, mixte)
 
 def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_tasks, identifiants,chemin_ajd,chemin_hier,ajd):
-    # 1. Initialisation des données pour le jour J (13/01/2026) -> AJOUT DES UNDERSCORES ICI
+    # 1. Initialisation des données pour le jour J (13/01/2026)
     D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
                          chemin_ajd, ajd)
     
@@ -352,7 +350,7 @@ D15=correction_en_fonction_du_jour_d_avant(df14,len(D),len((pd.read_excel("Parti
 W15 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", "Partie_1_LLM/data/Services_Agents_non_affectes_le_15_01_2026.xlsx", (len(D15), len(D15[0])), D15)
 services15 = pd.read_excel("Partie_1_LLM/data/Services_Agents_non_affectes_le_15_01_2026.xlsx")["Service"].tolist()
 df15 = matrice_vers_dataframe(opti(D15,W15), num_workers,len(D15[0]) , identifiants, services15)
-df15.to_excel("resultats14.xlsx")
+df15.to_excel("resultats15.xlsx")
 
 #on fait le 16
 
@@ -367,8 +365,11 @@ df16.to_excel("resultats16.xlsx")
 
 
     
-res = opti(W,D)
-
+res = opti(D,W)
+res13=opti(D13,W13)
+res14=opti(D14,W14)
+res15=opti(D15,W15)
+res16=opti(D16,W16)
 #On crée une fonction qui va update le planning excel de la semaine
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
@@ -433,8 +434,8 @@ def create_liste_non_affecté(mat_res, day):
     return ans
 
 def main(day):
-    D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{day.replace("/","_")}.xlsx", day)
-    W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{day.replace("/","_")}.xlsx", (len(D), len(D[0])), D)
+    D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx", day)
+    W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx", (len(D), len(D[0])), D)
     mat_res = opti(W,D)
 
     update_planning(mat_res,day)
