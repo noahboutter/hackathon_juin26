@@ -244,13 +244,11 @@ def opti(D,W):
                 if x[i, j].solution_value() > 0.5:
                     y[i,j]=1
                     #print(f'machiniste{i} fait le service{j}')
-                    #print(f"Worker {i} assigned to task {j}." + f" Cost: {costs[i][j]}")
     #else:
         #print("No solution found.")
     return y
-#x=opti()
-def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):  
-    #affectations = [[int(x[i, j].solution_value() > 0.5) for j in range(num_tasks)]for i in range(num_workers)]  
+
+def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):    
     df = pd.DataFrame(x, index=identifiants, columns=services)
     print (df) 
     return df
@@ -288,7 +286,7 @@ def tri_horaire(chemin_fichier_serv):
     return (matin, aprem, nuit, coupure, mixte)
 
 def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_tasks, identifiants,chemin_ajd,chemin_hier,ajd):
-    # 1. Initialisation des données pour le jour J (13/01/2026) -> AJOUT DES UNDERSCORES ICI
+    # 1. Initialisation des données pour le jour J (13/01/2026)
     D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
                          chemin_ajd, ajd)
     
