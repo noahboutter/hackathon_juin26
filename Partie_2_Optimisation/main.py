@@ -23,7 +23,8 @@ if __name__ == "__main__":
 
     op.update_planning(mat_res,day)
     dico_mach = op.create_dico_affectés(mat_res,day)
-    liste_mach = op.create_liste_non_affecté(mat_res, day)
+    liste_serv = op.create_liste_non_affecté(mat_res, day)
+
 
 
 
