@@ -9,14 +9,34 @@ import datetime
 
 
 STATUTS_DISPONIBLE = {"ASSU", "CP_REPORT", "DDD","DISPO","DISPO AM", "DISPO AMPL", "DISPO M", "DISPO MX","DISPO N"}
-
+'''
 def to_time(x):
     if isinstance(x, datetime.datetime):
         return x.time()
     elif isinstance(x, datetime.time):
         return x
     else:
-        return datetime.datetime.strptime(str(x), "%H:%M").time()
+        return datetime.datetime.strptime(str(x), "%H:%M").time()'''
+def to_time(x):
+    # Gestion des valeurs nulles / NaN / vides
+    if pd.isna(x) or x is None or str(x).strip().lower() == 'nan':
+        return datetime.time(0, 0) # Renvoie minuit par défaut pour éviter le plantage
+        
+    if isinstance(x, datetime.datetime):
+        return x.time()
+    elif isinstance(x, datetime.time):
+        return x
+    else:
+        try:
+            # Enlève les espaces inutiles autour du texte (ex: " 14:00 ")
+            clean_str = str(x).strip()
+            # Si le format Excel inclut les secondes (ex: "14:00:00")
+            if len(clean_str.split(':')) == 3:
+                return datetime.datetime.strptime(clean_str, "%H:%M:%S").time()
+            return datetime.datetime.strptime(clean_str, "%H:%M").time()
+        except ValueError:
+            # En cas d'autre format texte imprévu, évite le crash global
+            return datetime.time(0, 0)
 
 def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     """
@@ -345,7 +365,7 @@ def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_t
             D.loc[i, cols] = 0
             
     return D.to_numpy()
-                
+print('correction:')               
 print(correction_en_fonction_du_jour_d_avant(df,len(D),len(D[0]),identifiants))
         
         
