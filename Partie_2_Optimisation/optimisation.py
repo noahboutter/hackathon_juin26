@@ -202,7 +202,7 @@ W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/
 
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
-def opti():
+def opti(W, D):
     
     costs=W
     num_workers=len(D)
@@ -372,7 +372,7 @@ print(correction_en_fonction_du_jour_d_avant(df,len(D),len(D[0]),identifiants))
 
 
     
-res = opti()
+res = opti(W,D)
 
 #On crée une fonction qui va update le planning excel de la semaine
 from openpyxl import load_workbook
