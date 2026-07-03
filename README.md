@@ -31,7 +31,9 @@ Le planificateur peut poser des questions variées allant de la simple consultat
 
 - Analyse de crise : "Quelles sont les lignes en pénurie de conducteurs le 12/01 ?"
 
-_Note_ : Une liste exhaustive des questions supportées, ainsi que les réponses attendues pour valider le comportement de l'IA, est disponible dans le fichier de test questions_reponses.xlsx joint à ce dépôt.
+_Note_ : 
+- Une liste exhaustive des questions supportées, ainsi que les réponses attendues pour valider le comportement de l'IA, est disponible dans le fichier de test questions_reponses.xlsx joint à ce dépôt.
+-  Le jeu de données utilisé pour ce projet s'étend uniquement du 12/01/2026 au 16/01/2026. L'IA ne pourra donc pas répondre aux questions portant sur des dates situées en dehors de cette période.
 
 **Installation et Exécution :**
 
@@ -74,9 +76,9 @@ L'algorithme calcule ici l'affectation optimale sur l'ensemble du planning, en m
 - OpenPyXL : mise à jour du fichier de planning Excel avec coloration conditionnelle des cellules affectées
 
 **Installation et Exécution :**
-Placer les fichiers de données requis dans Partie_1_LLM/data/ :
-    - Export_Planning_du_12_01_2026_au_16_01_2026.xlsx (planning des machinistes),
-    - un fichier Services_Agents_non_affectés_le_JJ_MM_AAAA.xlsx par jour à traiter,
-    -preferences_agents.xlsx dans Partie_2_Optimisation/ (préférences de ligne et d'horaire).
-    - résolution du problème d'affectation via optimisation.opti ;
+Assurez vous d'avoir les fichiers de données requis dans Partie_1_LLM/data/ :
+    - Export_Planning_du_12_01_2026_au_16_01_2026.xlsx (planning des machinistes)
+    - un fichier Services_Agents_non_affectés_le_JJ_MM_AAAA.xlsx par jour à traiter
+Mais aussi:
+    - preferences_agents.xlsx dans Partie_2_Optimisation/ (préférences de ligne et d'horaire).
     mise à jour du planning Excel via optimisation.update_planning ;
