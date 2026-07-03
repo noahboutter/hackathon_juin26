@@ -66,6 +66,8 @@ L'algorithme calcule ici l'affectation optimale sur l'ensemble du planning, en m
 - Matrice de pondération W (W_initialize) : attribue un score à chaque affectation possible, en fonction du rang de préférence de l'agent pour la ligne et pour le type d'horaire (MAT, AM, JOUR, COUP, NUIT).
 
 - correction_en_fonction_du_jour_d_avant applique les règles de repos : un agent ayant travaillé l'après-midi ou la nuit la veille voit certains créneaux du lendemain bloqués dans D (ex : pas de matin/coupure après une nuit).
+-une optimisation de la satisfaction avec les conraintes respectée
+- un emploi du temps avec les affectations réalisées
 
 **Stack technique :**
 - OR-Tools (solveur SCIP) : résolution du problème d'affectation par optimisation linéaire (pywraplp)
