@@ -202,7 +202,7 @@ W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/
 
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
-def opti():
+def opti(D,W):
     
     costs=W
     num_workers=len(D)
@@ -240,6 +240,7 @@ def opti():
                 # Test if x[i,j] is 1 (with tolerance for floating point arithmetic).
                 if x[i, j].solution_value() > 0.5:
                     y[i,j]=1
+                    print(f'machiniste{i} fait le service{j}')
                     #print(f"Worker {i} assigned to task {j}." + f" Cost: {costs[i][j]}")
     #else:
         #print("No solution found.")
@@ -256,9 +257,9 @@ identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au
 services = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')['Service'].tolist()
 num_workers=len(D)
 num_tasks=len(D[0])
-df = matrice_vers_dataframe(opti(), num_workers, num_tasks, identifiants, services)
+df = matrice_vers_dataframe(opti(D,W), num_workers, num_tasks, identifiants, services)
 
-#df.to_excel("resultats.xlsx")
+df.to_excel("resultats12.xlsx")
 
 #on va retrouver qui fait des services de nuit et les aprèms
 # on cherche les services de nuit et de l'aprèm
@@ -323,21 +324,21 @@ def correction_en_fonction_du_jour_d_avant(df_travail_veille):
             
     return D.to_numpy()
 '''
-def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_tasks, identifiants):
+def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_tasks, identifiants,chemin_ajd,chemin_hier,ajd):
     # 1. Initialisation des données pour le jour J (13/01/2026) -> AJOUT DES UNDERSCORES ICI
     D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
-                         'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx', '13/01/2026')
+                         chemin_ajd, ajd)
     
-    # Extraction de la liste propre des services pour aujourd'hui -> AJOUT DES UNDERSCORES ICI
-    serv_df = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')
+    # Extraction de la liste propre des services pour aujourd'hui
+    serv_df = pd.read_excel(chemin_ajd)
     serv_list = serv_df['Service'].tolist()
     
     # Reconstruction de la matrice D de base pour aujourd'hui
     D = matrice_vers_dataframe(D1, num_workers, num_tasks, identifiants, serv_list)
     
-    # Récupération des tris horaires (Aujourd'hui vs Veille) -> AJOUT DES UNDERSCORES ICI
-    tri_ajd = tri_horaire('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')
-    tri_hier = tri_horaire('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')
+    # Récupération des tris horaires (Aujourd'hui vs Veille)
+    tri_ajd = tri_horaire(chemin_ajd)
+    tri_hier = tri_horaire(chemin_hier)
     
     # 2. Parcours des agents à partir du DataFrame de la veille
     for i in df_travail_veille.index:
@@ -365,14 +366,44 @@ def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_t
             D.loc[i, cols] = 0
             
     return D.to_numpy()
-print('correction:')               
-print(correction_en_fonction_du_jour_d_avant(df,len(D),len(D[0]),identifiants))
-        
+ #on fait le 13             
+D13=correction_en_fonction_du_jour_d_avant(df,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')) [['Service', 'Début', 'Fin']]),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx','13/01/2026')
+W13 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx', (len(D13), len(D13[0])), D13)
+services13 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')['Service'].tolist()
+print("jour13")
+df13 = matrice_vers_dataframe(opti(D13,W13), num_workers, num_tasks, identifiants, services13)
+df13.to_excel("resultats13.xlsx")
+
+#on fait le 14
+
+D14=correction_en_fonction_du_jour_d_avant(df,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx')) [['Service', 'Début', 'Fin']])),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','14/01/2026')
+W14 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx', (len(D14), len(D14[0])), D14)
+services14 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx')['Service'].tolist()
+df14 = matrice_vers_dataframe(opti(D14,W14), num_workers, len(D15[0]), identifiants, services14)
+df14.to_excel("resultats14.xlsx")
+
+#on fait le 15
+
+D15=correction_en_fonction_du_jour_d_avant(df,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx')) [['Service', 'Début', 'Fin']])),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx','15/01/2026')
+W15 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx', (len(D15), len(D15[0])), D15)
+services15 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx')['Service'].tolist()
+df15 = matrice_vers_dataframe(opti(D15,W15), num_workers,len(D15[0]) , identifiants, services15)
+df15.to_excel("resultats14.xlsx")
+
+#on fait le 16
+
+
+D16=correction_en_fonction_du_jour_d_avant(df,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx')) [['Service', 'Début', 'Fin']])),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx','16/01/2026')
+W16 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx', (len(D16), len(D16[0])), D16)
+services16 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx')['Service'].tolist()
+df16 = matrice_vers_dataframe(opti(D16,W16), num_workers, len(D16[0]), identifiants, services16)
+df16.to_excel("resultats16.xlsx")
+
         
 
 
     
-res = opti()
+res = opti(D,W)
 
 #On crée une fonction qui va update le planning excel de la semaine
 from openpyxl import load_workbook
