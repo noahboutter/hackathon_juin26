@@ -366,7 +366,8 @@ def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_t
             D.loc[i, cols] = 0
             
     return D.to_numpy()
- #on fait le 13             
+ #on fait le 13
+              
 D13=correction_en_fonction_du_jour_d_avant(df,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')) [['Service', 'Début', 'Fin']]),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx','13/01/2026')
 W13 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx', (len(D13), len(D13[0])), D13)
 services13 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')['Service'].tolist()
@@ -376,7 +377,7 @@ df13.to_excel("resultats13.xlsx")
 
 #on fait le 14
 
-D14=correction_en_fonction_du_jour_d_avant(df,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx')) [['Service', 'Début', 'Fin']])),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','14/01/2026')
+D14=correction_en_fonction_du_jour_d_avant(df13,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx')) [['Service', 'Début', 'Fin']]),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','14/01/2026')
 W14 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx', (len(D14), len(D14[0])), D14)
 services14 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx')['Service'].tolist()
 df14 = matrice_vers_dataframe(opti(D14,W14), num_workers, len(D15[0]), identifiants, services14)
@@ -384,7 +385,7 @@ df14.to_excel("resultats14.xlsx")
 
 #on fait le 15
 
-D15=correction_en_fonction_du_jour_d_avant(df,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx')) [['Service', 'Début', 'Fin']])),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx','15/01/2026')
+D15=correction_en_fonction_du_jour_d_avant(df14,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx')) [['Service', 'Début', 'Fin']]),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx','15/01/2026')
 W15 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx', (len(D15), len(D15[0])), D15)
 services15 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx')['Service'].tolist()
 df15 = matrice_vers_dataframe(opti(D15,W15), num_workers,len(D15[0]) , identifiants, services15)
@@ -393,7 +394,7 @@ df15.to_excel("resultats14.xlsx")
 #on fait le 16
 
 
-D16=correction_en_fonction_du_jour_d_avant(df,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx')) [['Service', 'Début', 'Fin']])),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx','16/01/2026')
+D16=correction_en_fonction_du_jour_d_avant(df15,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx')) [['Service', 'Début', 'Fin']]),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_15_01_2026.xlsx','16/01/2026')
 W16 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx', (len(D16), len(D16[0])), D16)
 services16 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_16_01_2026.xlsx')['Service'].tolist()
 df16 = matrice_vers_dataframe(opti(D16,W16), num_workers, len(D16[0]), identifiants, services16)
