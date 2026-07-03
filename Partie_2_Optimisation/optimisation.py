@@ -424,7 +424,7 @@ def create_dico_affectes(mat_res, day):
             ans.append({"agent": str(df_mach["Identifiant"].iloc[i]), "service": str(df_serv["Service"].iloc[j])})
     return ans
 
-def create_liste_non_affecté(mat_res, day):
+def create_liste_non_affecte(mat_res, day):
     ans = []
     df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{day.replace("/","_")}.xlsx")) [["Service", "Début", "Fin"]]
     P = len(df_serv)
@@ -440,14 +440,14 @@ def main(day):
 
     update_planning(mat_res,day)
     dico_mach = {day: create_dico_affectes(mat_res, day)}
-    liste_serv = {day: create_liste_non_affecté(mat_res, day)}
+    liste_serv = {day: create_liste_non_affecte(mat_res, day)}
     for i in range(13,17):
-        D = correction_en_fonction_du_jour_d_avant(matrice_vers_dataframe(mat_res), len(D), len(D[0]), identifiants,f"Partie_1_LLM/data/Services_Agents_non_affectés_le_1{i}_01_2026.xlsx",f"Partie_1_LLM/data/Services_Agents_non_affectés_le_1{i - 1}_01_2026.xlsx",f"1{i}/01/2026")
-        W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectés_le_1{i}_01_2026.xlsx", (len(D), len(D[0])), D)
+        D = correction_en_fonction_du_jour_d_avant(matrice_vers_dataframe(mat_res), len(D), len(D[0]), identifiants,f"Partie_1_LLM/data/Services_Agents_non_affectes_le_1{i}_01_2026.xlsx",f"Partie_1_LLM/data/Services_Agents_non_affectes_le_1{i - 1}_01_2026.xlsx",f"1{i}/01/2026")
+        W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectes_le_1{i}_01_2026.xlsx", (len(D), len(D[0])), D)
         mat_res = opti(D,W)
         update_planning(mat_res, f"1{i}/01/2026")
-        dico_mach[f"1{i}/01/2026"] = create_dico_affectés(mat_res,f"1{i}/01/2026")
-        liste_serv[f"1{i}/01/2026"] = create_liste_non_affecté(mat_res,f"1{i}/01/2026")
+        dico_mach[f"1{i}/01/2026"] = create_dico_affectes(mat_res,f"1{i}/01/2026")
+        liste_serv[f"1{i}/01/2026"] = create_liste_non_affecte(mat_res,f"1{i}/01/2026")
     return (dico_mach, liste_serv)
 
 
