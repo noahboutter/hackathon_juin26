@@ -31,7 +31,9 @@ Le planificateur peut poser des questions variées allant de la simple consultat
 
 - Analyse de crise : "Quelles sont les lignes en pénurie de conducteurs le 12/01 ?"
 
-_Note_ : Une liste exhaustive des questions supportées, ainsi que les réponses attendues pour valider le comportement de l'IA, est disponible dans le fichier de test questions_reponses.xlsx joint à ce dépôt.
+_Note_ : 
+- Une liste exhaustive des questions supportées, ainsi que les réponses attendues pour valider le comportement de l'IA, est disponible dans le fichier de test questions_reponses.xlsx joint à ce dépôt.
+-  Le jeu de données utilisé pour ce projet s'étend uniquement du 12/01/2026 au 16/01/2026. L'IA ne pourra donc pas répondre aux questions portant sur des dates situées en dehors de cette période.
 
 **Installation et Exécution :**
 
