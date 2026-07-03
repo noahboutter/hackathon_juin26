@@ -188,7 +188,10 @@ def W_initialize(chemin_fichier_pref: str,chemin_fichier_serv: str, dim, D):
         for j in range(P):
             if D[i,j] == 0:
                 continue
-            index_ligne = liste_ligne.index(int(df_serv['Service'].iloc[j][1:4]))
+            if int(df_serv['Service'].iloc[j][1:4]) in liste_ligne:
+                index_ligne = liste_ligne.index(int(df_serv['Service'].iloc[j][1:4]))
+            else:
+                index_ligne = len(liste_ligne)
             index_horaire = liste_horaire.index(type_service(df_serv, j))
             W[i,j] += coef_ligne * (0.5 + ((len(liste_ligne) if len(liste_ligne) != 0 else 1) - index_ligne) * increment_ligne) + coef_horaire * coef_horaire * (0.5 + (len(liste_horaire) - index_horaire) * increment_horaire)
     return W
@@ -202,7 +205,7 @@ W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/
 
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
-def opti(W, D):
+def opti(D,W):
     
     costs=W
     num_workers=len(D)
@@ -284,46 +287,6 @@ def tri_horaire(chemin_fichier_serv):
     
     return (matin, aprem, nuit, coupure, mixte)
 
-'''
-def correction_en_fonction_du_jour_d_avant(df_travail_veille):
-    # 1. Initialisation des données
-    D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
-                         'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','13/01/2026')
-    serv = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')
-    
-    D = matrice_vers_dataframe(D1, num_workers, num_tasks, identifiants, serv)
-    
-    tri_ajd = tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
-    tri_hier = tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')
-    
-    # 2. Parcours des agents de la veille
-    for i in df_travail_veille['identifiants']:
-        # On suppose que l'identifiant est l'index de df_travail_veille
-        # et qu'il y a une colonne 'service'
-        if i in df_travail_veille.index:
-            test = df_travail_veille.loc[i, 'service']
-        else:
-            continue # Si l'identifiant n'est pas trouvé, on passe au suivant
-            
-        # Conversion des services en listes/sets pour accélérer la recherche avec 'in'
-        services_hier_1 = tri_hier[1]['Service'].values
-        services_hier_2 = tri_hier[2]['Service'].values
-        
-        # Conditions et modifications directes dans D
-        # Remplacer le bloc de filtrage par :
-        if test in services_hier_1:
-            services_a_bloquer = pd.concat([tri_ajd[0]['Service'], tri_ajd[3]['Service']]).unique()
-            # On filtre les colonnes existantes dans D qui sont dans 'services_a_bloquer'
-            cols = [c for c in services_a_bloquer if c in D.columns]
-            D.loc[i, cols] = 0
-            
-        elif test in services_hier_2:
-            services_a_bloquer = pd.concat([tri_ajd[0]['Service'], tri_ajd[3]['Service'], tri_ajd[4]['Service']])
-            mask = (D['Service'].isin(services_a_bloquer)) & (D['identifiant'] == i)
-            D.loc[mask, :] = 0
-            
-    return D.to_numpy()
-'''
 def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_tasks, identifiants,chemin_ajd,chemin_hier,ajd):
     # 1. Initialisation des données pour le jour J (13/01/2026) -> AJOUT DES UNDERSCORES ICI
     D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
@@ -378,9 +341,9 @@ df13.to_excel("resultats13.xlsx")
 #on fait le 14
 
 D14=correction_en_fonction_du_jour_d_avant(df13,len(D),len((pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx')) [['Service', 'Début', 'Fin']]),identifiants,'Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx','Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','14/01/2026')
-W14 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx', (len(D14), len(D14[0])), D14)
+W14 = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx', (len(D14), len(D14[0])), D14)
 services14 = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_14_01_2026.xlsx')['Service'].tolist()
-df14 = matrice_vers_dataframe(opti(D14,W14), num_workers, len(D15[0]), identifiants, services14)
+df14 = matrice_vers_dataframe(opti(D14,W14), num_workers, len(D14[0]), identifiants, services14)
 df14.to_excel("resultats14.xlsx")
 
 #on fait le 15
