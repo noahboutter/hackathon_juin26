@@ -6,11 +6,11 @@ from langchain_core.tools import tool
 
 
 SERVICES_PATHS = [
-    os.path.join("data", "Services_Agents_non_affectés_le_12_01_2026.xlsx"),
-    os.path.join("data", "Services_Agents_non_affectés_le_13_01_2026.xlsx"),
-    os.path.join("data", "Services_Agents_non_affectés_le_14_01_2026.xlsx"),
-    os.path.join("data", "Services_Agents_non_affectés_le_15_01_2026.xlsx"),
-    os.path.join("data", "Services_Agents_non_affectés_le_16_01_2026.xlsx"),
+    "data\\Services_Agents_non_affectes_le_12_01_2026.xlsx",
+    "data\\Services_Agents_non_affectes_le_13_01_2026.xlsx",
+    "data\\Services_Agents_non_affectes_le_14_01_2026.xlsx",
+    "data\\Services_Agents_non_affectes_le_15_01_2026.xlsx",
+    "data\\Services_Agents_non_affectes_le_16_01_2026.xlsx",
 ]
 
 PLANNING_PATH = os.path.join("data", "Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")
@@ -300,14 +300,15 @@ def info_agent(identifiant_agent: str) -> str:
 
 @tool
 def compter_services_non_couverts(date: str = "") -> str:
-    """Compte le nombre total de services présents dans le(s) fichier(s) des services non affectés (= tous les services qui n'ont actuellement aucun conducteur assigné).
+    """Compte le nombre total de services présents dans le(s) fichier(s) des services non affectes 
+    (= tous les services qui n'ont actuellement aucun conducteur assigné).
     
     date (optionnel) : au format jj/mm/aaaa. Si précisée, compte uniquement pour ce jour. Si vide, compte sur l'ensemble de la période."""
     try:
         if not date:
             # Par défaut : on compte sur toute la semaine
             df = _load_services()
-            return f"{len(df)} service(s) restent non affectés au total sur l'ensemble de la période."
+            return f"{len(df)} service(s) restent non affectes au total sur l'ensemble de la période."
         else:
             # Sinon on cherche uniquement le fichier du jour
             date_fichier = date.replace("/", "_")
@@ -491,8 +492,7 @@ def compter_services_par_ligne(numero_ligne: str, date: str = "") -> str:
     
 @tool
 def lister_services_par_date(date: str) -> str:
-    """Liste tous les codes de services qui doivent être affectés à une date précise.
-    date : au format jj/mm/aaaa."""
+    """Liste tous les codes de services qui doivent être affectes à une date précise."""
     try:
         # C'est toujours la même on formate et on cherche
         date_fichier = date.replace("/", "_")

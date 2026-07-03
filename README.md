@@ -61,3 +61,24 @@ streamlit run Partie_1_LLM/interface.py
 (Vous pouvez également tester la version console en exécutant python Partie_1_LLM/main.py)
 
 ## Partie 2 : Algorithme d'Optimisation
+L'algorithme calcule ici l'affectation optimale sur l'ensemble du planning, en maximisant la satisfaction des préférences des agents tout en respectant strictement les contraintes de qualification, de disponibilité et de repos.
+
+- Matrice de faisabilité D (initialize_data) : D[i, j] = 1 si le machiniste i peut réaliser le service j, c'est-à-dire s'il connaît la ligne concernée et si son statut du jour (ASSU, DISPO, DISPO AM/M/N, etc.) est compatible avec l'horaire du service.
+
+- Matrice de pondération W (W_initialize) : attribue un score à chaque affectation possible, en fonction du rang de préférence de l'agent pour la ligne et pour le type d'horaire (MAT, AM, JOUR, COUP, NUIT).
+
+- correction_en_fonction_du_jour_d_avant applique les règles de repos : un agent ayant travaillé l'après-midi ou la nuit la veille voit certains créneaux du lendemain bloqués dans D (ex : pas de matin/coupure après une nuit).
+-une optimisation de la satisfaction avec les conraintes respectée
+- un emploi du temps avec les affectations réalisées
+
+**Stack technique :**
+- OR-Tools (solveur SCIP) : résolution du problème d'affectation par optimisation linéaire (pywraplp)
+- OpenPyXL : mise à jour du fichier de planning Excel avec coloration conditionnelle des cellules affectées
+
+**Installation et Exécution :**
+Placer les fichiers de données requis dans Partie_1_LLM/data/ :
+    - Export_Planning_du_12_01_2026_au_16_01_2026.xlsx (planning des machinistes),
+    - un fichier Services_Agents_non_affectés_le_JJ_MM_AAAA.xlsx par jour à traiter,
+    -preferences_agents.xlsx dans Partie_2_Optimisation/ (préférences de ligne et d'horaire).
+    - résolution du problème d'affectation via optimisation.opti ;
+    mise à jour du planning Excel via optimisation.update_planning ;
