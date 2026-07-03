@@ -88,71 +88,107 @@ def _cellule_dispo(valeur) -> bool:
 # ====== Fonctions utilisées comme outils pour le LLM ======
 
 @tool
-def compter_services_par_type(type_service: str) -> str:
-    """Compte le nombre de services à affecter pour un type donné.
-    `type_service` doit être l'un de : MAT, AM, SOI, NUIT (selon les valeurs réelles
-    de la colonne Type du fichier services). Exemple : 'MAT' pour les services du matin."""
+def compter_services_par_type(type_service: str, date: str = "") -> str:
+    """Compte le nombre de services à affecter pour un type donné (ex: 'MAT', 'AM').
+    
+    type_service : 'MAT', 'AM', 'SOI', 'NUIT'
+    date (optionnel) : au format jj/mm/aaaa. Si précisée, compte uniquement pour ce jour. 
+    Si vide, compte sur l'ensemble de la semaine."""
     try:
-        df = _load_services()
         type_service = type_service.strip().upper()
-        nb = (df["Type"].astype(str).str.upper() == type_service).sum() # Comptage du nombre de services correspondant au type
+        
+        if not date:
+            # Comportement par défaut : on charge tout
+            df = _load_services()
+            periode_str = "sur l'ensemble de la période"
+        else:
+            # Comportement ciblé : on charge uniquement le fichier du jour
+            date_fichier = date.replace("/", "_")
+            fichier_cible = next((path for path in SERVICES_PATHS if date_fichier in path), None)
+            
+            if not fichier_cible:
+                return f"Aucun fichier de services trouvé pour le {date}."
+                
+            df = pd.read_excel(fichier_cible)
+            df.columns = [str(c).strip() for c in df.columns]
+            periode_str = f"le {date}"
+            
+        nb = (df["Type"].astype(str).str.upper() == type_service).sum()
         total = len(df)
-        return f"{nb} service(s) de type '{type_service}' sur {total} services à affecter au total."
+        return f"{nb} service(s) de type '{type_service}' sur {total} services à affecter au total {periode_str}."
     except Exception as e:
         return f"Erreur lors du comptage des services : {e}"
 
 
 @tool
-def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
-    """Donne la liste des services à affecter qu'un agent pourrait réaliser,
-    en vérifiant d'abord ses jours de disponibilité, puis en cherchant les services 
-    compatibles avec sa connaissance de ligne sur ces dates.
+def lister_services_possibles_pour_agent(identifiant_agent: str, date: str = "") -> str:
+    """Donne la liste des services à affecter qu'un agent pourrait réaliser.
     
-    :identifiant_agent: l'identifiant numérique de l'agent (ex: '5')."""
+    identifiant_agent: l'identifiant numérique de l'agent (ex: '5').
+    date (optionnel): au format jj/mm/aaaa. Si précisée, cherche uniquement les services possibles pour ce jour précis."""
     try:
         planning = _load_planning()
-        services = _load_services()
-
         agent_id = int(identifiant_agent)
         ligne_agent = planning.loc[planning["Identifiant"] == agent_id]
+        
         if ligne_agent.empty:
             return f"Aucun agent trouvé avec l'identifiant {agent_id}."
 
         row_agent = ligne_agent.iloc[0]
         
-        # Disponibilités de l'agen
-        dates_disponibles = set()
-        for date_col in DATE_COLS_CACHE:
-            if _cellule_dispo(row_agent[date_col]):
-                dates_disponibles.add(date_col)
-        
-        if not dates_disponibles:
-            return f"L'agent {agent_id} n'est disponible sur aucune date du planning actuel."
+        # 1. Détermination des dates à vérifier selon la disponibilité de l'agent
+        dates_a_verifier = set()
+        if date:
+            # Si l'utilisateur a demandé une date précise
+            if date not in DATE_COLS_CACHE:
+                return f"Date '{date}' introuvable dans le planning."
+            if _cellule_dispo(row_agent[date]):
+                dates_a_verifier.add(date)
+            else:
+                return f"L'agent {agent_id} n'est pas disponible le {date} (statut : {row_agent[date]})."
+        else:
+            # Si aucune date n'est précisée, on cherche tous ses jours de disponibilité
+            for date_col in DATE_COLS_CACHE:
+                if _cellule_dispo(row_agent[date_col]):
+                    dates_a_verifier.add(date_col)
+                    
+        if not dates_a_verifier:
+            return f"L'agent {agent_id} n'est disponible sur aucune date demandée/actuelle."
 
-        # Services disponibles lors des disponibilités de l'agent
-        services["date_str"] = pd.to_datetime(services["Date"]).dt.strftime("%d/%m/%Y")
-        services_jours_dispos = services[services["date_str"].isin(dates_disponibles)].copy()
+        # 2. Chargement CIBLÉ des fichiers de services uniquement pour les jours où l'agent est dispo
+        frames = []
+        for d in dates_a_verifier:
+            date_fichier = d.replace("/", "_")
+            fichier_cible = next((path for path in SERVICES_PATHS if date_fichier in path), None)
+            if fichier_cible:
+                df_jour = pd.read_excel(fichier_cible)
+                frames.append(df_jour)
+                
+        if not frames:
+            return f"L'agent {agent_id} est disponible, mais aucun service n'est à pourvoir ces jours-là (fichiers vides ou introuvables)."
 
-        if services_jours_dispos.empty:
-            return f"L'agent {agent_id} est disponible les {', '.join(sorted(dates_disponibles))}, mais aucun service n'est à pourvoir ces jours-là."
+        services_jours_dispos = pd.concat(frames, ignore_index=True)
 
-        # Vérification des lignes que peut conduire l'agent
+        # 3. Vérification des lignes que peut conduire l'agent
         qualifs = row_agent["Qualification : Connaissance de ligne"]
         lignes_connues = {l.strip() for l in str(qualifs).split(",")}
         
-        services_jours_dispos["ligne"] = services_jours_dispos["Service"].apply(_ligne_extraite)
+        # Nettoyage et filtrage
+        services_jours_dispos = services_jours_dispos.dropna(subset=["Service"])
+        services_jours_dispos["ligne"] = services_jours_dispos["Service"].astype(str).apply(_ligne_extraite)
+        
         possibles = services_jours_dispos[services_jours_dispos["ligne"].isin(lignes_connues)]
 
         if possibles.empty:
             return (
-                f"L'agent {agent_id} est disponible les {', '.join(sorted(dates_disponibles))}, "
+                f"L'agent {agent_id} est disponible les {', '.join(sorted(dates_a_verifier))}, "
                 f"mais il ne connaît pas les lignes des services à pourvoir ces jours-là (lignes connues : {', '.join(lignes_connues)})."
             )
 
         # Résultat final
         liste_services = possibles["Service"].tolist()
         return (
-            f"L'agent {agent_id} est disponible aux dates suivantes : {', '.join(sorted(dates_disponibles))}.\n"
+            f"L'agent {agent_id} est disponible aux dates suivantes : {', '.join(sorted(dates_a_verifier))}.\n"
             f"Il connaît les lignes : {', '.join(sorted(lignes_connues, key=lambda x:(len(x),x)))}.\n"
             f"{len(liste_services)} service(s) disponible(s) et compatible(s) : {', '.join(liste_services)}"
         )
