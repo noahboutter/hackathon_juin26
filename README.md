@@ -6,9 +6,9 @@ Le métier de planificateur ("feuilliste") nécessite d'analyser en permanence d
 
 Ce projet vise à faciliter ce processus à travers deux grands axes :
 
-- Un assistant IA (Chatbot) : permettre au planificateur d'interroger ses données (fichiers Excel) en langage naturel, sans avoir à coder ou manipuler manuellement les tableaux
+- un **assistant IA** (Chatbot) : permettre au planificateur d'interroger ses données (fichiers Excel) en langage naturel, sans avoir à coder ou manipuler manuellement les tableaux
 
-- un algorithme d'optimisation : automatiser l'affectation des services en respectant les contraintes du métier (connaissance de la ligne, temps de repos, etc.)
+- un **algorithme d'optimisation** : automatiser l'affectation des services en respectant les contraintes du métier (connaissance de la ligne, temps de repos, etc.)
 
 ## Partie 1 : Assistant IA (Chatbot)
 L'assistant repose sur une architecture d'Agent ReAct (Raisonnement + Action). Contrairement à un simple LLM qui génère du texte, notre agent dispose d'outils Python (via Pandas) lui permettant d'aller lire, filtrer et croiser les données réelles des fichiers Excel avant de formuler sa réponse.
@@ -21,7 +21,8 @@ L'assistant repose sur une architecture d'Agent ReAct (Raisonnement + Action). C
 
 - Interface : **Streamlit** pour une expérience utilisateur fluide.
 
-**Exemples d'utilisation**
+**Exemples d'utilisation :**
+
 Le planificateur peut poser des questions variées allant de la simple consultation à l'anticipation des risques. Voici quelques exemples :
 
 - Consultation : "Combien y a-t-il de services du matin (MAT) à couvrir ?"
@@ -32,7 +33,8 @@ Le planificateur peut poser des questions variées allant de la simple consultat
 
 _Note_ : Une liste exhaustive des questions supportées, ainsi que les réponses attendues pour valider le comportement de l'IA, est disponible dans le fichier de test questions_reponses.xlsx joint à ce dépôt.
 
-**Installation et Exécution**
+**Installation et Exécution :**
+
 1. Prérequis :
 - Avoir installé Ollama sur sa machine.
 - Avoir téléchargé le modèle utilisé :
@@ -46,7 +48,7 @@ Assurez-vous d'être dans un environnement virtuel Python, puis installez les mo
 ```bash
 pip install -r requirements.txt
 ```
-Bash
+
 
 3. Lancement de l'interface utilisateur :
 Pour démarrer le chatbot dans votre navigateur, exécutez la commande suivante à la racine du projet :
