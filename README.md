@@ -83,3 +83,4 @@ Assurez vous d'avoir les fichiers de données requis dans Partie_1_LLM/data/ :
 Mais aussi:
 - preferences_agents.xlsx dans Partie_2_Optimisation/ (préférences de ligne et d'horaire).
 - il y aura une mise à jour du planning Excel via optimisation.update_planning ;
+-  La fonction main(day : str) du fichier optimisation.py permet de générer les plannings pour toute la semaine à partir du jour day et jusqu'à la fin de la semaine. day doit être sous la forme "dd/mm/yyyy". Les emplois du temps de chaque jours sont crées dans des fichiers excels dont le nom est sous la forme "planning_du_dd/mm/yyyy_updated.xlsx". Les postes attribués sont représentés en fond jaune pastel dans le excel.
