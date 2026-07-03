@@ -1,7 +1,7 @@
 from pydoc import doc
 import re
 import pandas as pd
-from langchain_core.tools import tool
+
 
 
 
@@ -70,14 +70,11 @@ def _agent_connait_la_ligne(qualifications: str, ligne: str) -> bool:
 def _cellule_dispo(valeur) -> bool:
     """Un agent est considéré disponible ce jour-là si la cellule est vide,
     ou ne contient que des statuts 'disponible' (pas de repos/congé/service déjà pris)."""
-    
-    # 1. Gestion des cellules vides 
     if pd.isna(valeur) or str(valeur).strip() == "" or str(valeur).strip().lower() == "nan":
         return True
-        
-    # 2. Gestion des statuts multiples séparés par une virgule
-    parts = [p.strip() for p in str(valeur).split(",")]
     
+    # On découpe s'il y a plusieurs éléments (ex: "DISPO, ASSU")
+    parts = [p.strip() for p in str(valeur).split(",")]
     # S'il y a un élément qui indique que l'agent n'est pas disponible, on renvoie False
     for p in parts:
         if p not in STATUTS_DISPONIBLE:
@@ -86,8 +83,6 @@ def _cellule_dispo(valeur) -> bool:
 
 
 # ====== Fonctions utilisées comme outils pour le LLM ======
-
-@tool
 def compter_services_par_type(type_service: str) -> str:
     """Compte le nombre de services à affecter pour un type donné.
     `type_service` doit être l'un de : MAT, AM, SOI, NUIT (selon les valeurs réelles
@@ -102,7 +97,7 @@ def compter_services_par_type(type_service: str) -> str:
         return f"Erreur lors du comptage des services : {e}"
 
 
-@tool
+
 def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
     """Donne la liste des services à affecter qu'un agent pourrait réaliser,
     en vérifiant d'abord ses jours de disponibilité, puis en cherchant les services 
@@ -159,7 +154,7 @@ def lister_services_possibles_pour_agent(identifiant_agent: str) -> str:
     except Exception as e:
         return f"Erreur lors de la recherche des services pour l'agent {identifiant_agent} : {e}"
 
-@tool
+
 def lister_conducteurs_disponibles_pour_service(code_service: str, date: str = "") -> str:
     """À UTILISER UNIQUEMENT POUR UN SERVICE PRÉCIS ET NON POUR UNE LIGNE.
     Donne la liste des conducteurs disponibles pour un service donné (ex: 'L140S006'),
@@ -208,7 +203,7 @@ def lister_conducteurs_disponibles_pour_service(code_service: str, date: str = "
     except Exception as e:
         return f"Erreur lors de la recherche de conducteurs pour {code_service} : {e}"
 
-@tool
+
 def lister_conducteurs_disponibles_pour_ligne(numero_ligne: str, date: str = "") -> str:
     """À UTILISER UNIQUEMENT QUAND L'UTILISATEUR PARLE D'UNE LIGNE ENTIÈRE (ex: 'ligne 66').
     Compte le nombre d'agents qualifiés ET disponibles pour conduire une ligne donnée.
@@ -245,7 +240,7 @@ def lister_conducteurs_disponibles_pour_ligne(numero_ligne: str, date: str = "")
     except Exception as e:
         return f"Erreur lors de la recherche des agents disponibles pour la ligne {numero_ligne} : {e}"
 
-@tool
+
 def info_agent(identifiant_agent: str) -> str:
     """Donne les informations générales d'un agent : lignes connues et statut/affectation
     pour chaque jour de la semaine de planning.
@@ -269,7 +264,7 @@ def info_agent(identifiant_agent: str) -> str:
         return f"Erreur lors de la récupération des infos de l'agent {identifiant_agent} : {e}"
 
 
-@tool
+
 def compter_services_non_couverts(date: str = "") -> str:
     """Compte le nombre total de services présents dans le(s) fichier(s) des services non affectés 
     (= tous les services qui n'ont actuellement aucun conducteur assigné).
@@ -295,7 +290,7 @@ def compter_services_non_couverts(date: str = "") -> str:
     except Exception as e:
         return f"Erreur lors du comptage des services non couverts : {e}"
     
-@tool
+
 def compter_agents_par_statut(statut: str, date: str) -> str:
     """Compte ET liste les agents qui ont un statut spécifique (ex: 'CP', 'MAL', 'R') à une date donnée.
     date: format jj/mm/aaaa."""
@@ -321,7 +316,8 @@ def compter_agents_par_statut(statut: str, date: str) -> str:
     except Exception as e:
         return f"Erreur lors de la recherche par statut : {e}"
 
-@tool
+
+
 def lister_lignes_avec_penurie(date: str) -> str:
     """Liste les lignes où le nombre de services à couvrir dépasse le nombre d'agents disponibles et qualifiés pour cette date.
     date: format jj/mm/aaaa."""
@@ -380,7 +376,7 @@ def lister_lignes_avec_penurie(date: str) -> str:
         return f"Erreur lors de l'analyse des pénuries : {e}"
     
 
-@tool
+
 def lister_services_sans_candidat(date: str) -> str:
     """Liste les services spécifiques pour lesquels absolument aucun agent qualifié ET disponible n'existe à cette date."""
     try:
@@ -419,7 +415,7 @@ def lister_services_sans_candidat(date: str) -> str:
         return f"Erreur : {e}"
     
 
-@tool
+
 def compter_services_par_ligne(numero_ligne: str) -> str:
     """Compte combien de services restent à affecter au total pour une ligne donnée."""
     try:
@@ -432,7 +428,7 @@ def compter_services_par_ligne(numero_ligne: str) -> str:
     except Exception as e:
         return f"Erreur : {e}"
     
-@tool
+
 def lister_services_par_date(date: str) -> str:
     """Liste tous les codes de services qui doivent être affectés à une date précise."""
     try:
@@ -453,7 +449,7 @@ def lister_services_par_date(date: str) -> str:
     except Exception as e:
         return f"Erreur : {e}"
     
-@tool
+
 def resume_journee(date: str) -> str:
     """Fait une synthèse globale pour une journée : services à couvrir, agents dispos, et alertes."""
     try:
@@ -492,7 +488,7 @@ def resume_journee(date: str) -> str:
     except Exception as e:
         return f"Erreur de synthèse : {e}"
     
-@tool
+
 def taux_couverture_par_ligne(date: str) -> str:
     """Calcule le ratio de tension pour chaque ligne le jour J (Nb de services à affecter / Nb d'agents qualifiés et dispos)."""
     try:
@@ -536,18 +532,13 @@ def taux_couverture_par_ligne(date: str) -> str:
         return f"Erreur de calcul des taux : {e}"
 
 
-TOOLS = [
-    compter_services_par_type,
-    lister_services_possibles_pour_agent,
-    lister_conducteurs_disponibles_pour_service,
-    info_agent,
-    compter_services_non_couverts,
-    lister_conducteurs_disponibles_pour_ligne,
-    compter_agents_par_statut,
-    lister_lignes_avec_penurie,
-    lister_services_sans_candidat,
-    compter_services_par_ligne,
-    lister_services_par_date,
-    resume_journee,
-    taux_couverture_par_ligne
-]
+
+_load_services()
+_load_planning()
+print(taux_couverture_par_ligne("12/01/2026"))
+
+
+
+
+
+

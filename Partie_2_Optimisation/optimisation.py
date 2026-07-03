@@ -9,14 +9,34 @@ import datetime
 
 
 STATUTS_DISPONIBLE = {"ASSU", "CP_REPORT", "DDD","DISPO","DISPO AM", "DISPO AMPL", "DISPO M", "DISPO MX","DISPO N"}
-
+'''
 def to_time(x):
     if isinstance(x, datetime.datetime):
         return x.time()
     elif isinstance(x, datetime.time):
         return x
     else:
-        return datetime.datetime.strptime(str(x), "%H:%M").time()
+        return datetime.datetime.strptime(str(x), "%H:%M").time()'''
+def to_time(x):
+    # Gestion des valeurs nulles / NaN / vides
+    if pd.isna(x) or x is None or str(x).strip().lower() == 'nan':
+        return datetime.time(0, 0) # Renvoie minuit par défaut pour éviter le plantage
+        
+    if isinstance(x, datetime.datetime):
+        return x.time()
+    elif isinstance(x, datetime.time):
+        return x
+    else:
+        try:
+            # Enlève les espaces inutiles autour du texte (ex: " 14:00 ")
+            clean_str = str(x).strip()
+            # Si le format Excel inclut les secondes (ex: "14:00:00")
+            if len(clean_str.split(':')) == 3:
+                return datetime.datetime.strptime(clean_str, "%H:%M:%S").time()
+            return datetime.datetime.strptime(clean_str, "%H:%M").time()
+        except ValueError:
+            # En cas d'autre format texte imprévu, évite le crash global
+            return datetime.time(0, 0)
 
 def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     """
@@ -87,10 +107,19 @@ def initialize_data(chemin_fichier_mach:str, chemin_fichier_serv, day: str):
     return D
             
 
-D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', '12/01/2026')
+D = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx', '12/01/2026')
 
 def type_service(df, j):
-    pass
+    if (df['Type'].iloc[j]) != None and isinstance(df['Type'].iloc[j],str) :
+        return df['Type'].iloc[j]
+    elif to_time(df['Fin'].iloc[j]) <= to_time(datetime.datetime.strptime("14:00","%H:%M")):
+        return 'MAT'
+    elif to_time(df['Fin'].iloc[j]) >= to_time(datetime.datetime.strptime("22:00","%H:%M")) or to_time(df['Fin'].iloc[j]) <= to_time(datetime.datetime.strptime("05:00","%H:%M")):
+        return 'NUIT'
+    elif to_time(df['Début'].iloc[j]) >= to_time(datetime.datetime.strptime("14:00","%H:%M")):
+        return 'AM'
+    else:
+        return 'JOUR'
 
 def W_initialize(chemin_fichier_pref: str,chemin_fichier_serv: str, dim, D):
     """
@@ -167,9 +196,9 @@ def W_initialize(chemin_fichier_pref: str,chemin_fichier_serv: str, dim, D):
             
 
 
-W = W_initialize("Partie_1_LLM/data/preferences_machinistes.xlsx", 'Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx', (len(D), len(D[0])), D)
+W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", 'Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx', (len(D), len(D[0])), D)
 
-W=np.ones((len(D),len(D[0])))
+#W=np.ones((len(D),len(D[0])))
 
 #on considère qu'on a D et W la 
 from ortools.linear_solver import pywraplp
@@ -215,7 +244,7 @@ def opti():
     #else:
         #print("No solution found.")
     return y
-x=opti()
+#x=opti()
 def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):  
     #affectations = [[int(x[i, j].solution_value() > 0.5) for j in range(num_tasks)]for i in range(num_workers)]  
     df = pd.DataFrame(x, index=identifiants, columns=services)
@@ -224,10 +253,193 @@ def matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services):
 
 
 identifiants = pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant'].tolist() 
-services = pd.read_excel('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')['Service'].tolist()
+services = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')['Service'].tolist()
 num_workers=len(D)
 num_tasks=len(D[0])
-df = matrice_vers_dataframe(x, num_workers, num_tasks, identifiants, services)
- 
-df.to_excel("resultats.xlsx")
+df = matrice_vers_dataframe(opti(), num_workers, num_tasks, identifiants, services)
+
+#df.to_excel("resultats.xlsx")
+
+#on va retrouver qui fait des services de nuit et les aprèms
+# on cherche les services de nuit et de l'aprèm
+
+def tri_horaire(chemin_fichier_serv):
+    df_serv = pd.read_excel(chemin_fichier_serv)[['Service', 'Début', 'Fin', 'Type']]
+    
+    # Conversion propre pour les comparaisons
+    df_serv['t_debut'] = df_serv['Début'].apply(to_time)
+    df_serv['t_fin'] = df_serv['Fin'].apply(to_time)
+    
+    t05 = to_time("05:00")
+    t11 = to_time("11:00")
+    t14 = to_time("14:00")
+    t22 = to_time("22:00")
+
+    matin = df_serv[(df_serv['t_fin'] <= t14) & (df_serv['t_debut'] < t14)]
+    aprem = df_serv[(df_serv['t_fin'] <= t22) & (df_serv['t_debut'] >= t14)]
+    nuit = df_serv[(df_serv['t_fin'] > t22) | (df_serv['t_fin'] < t05)]
+    coupure = df_serv[df_serv['Type'] == 'COUP']
+    mixte = df_serv[(df_serv['t_fin'] > t14) & (df_serv['t_debut'] < t11)]
+    
+    return (matin, aprem, nuit, coupure, mixte)
+
+'''
+def correction_en_fonction_du_jour_d_avant(df_travail_veille):
+    # 1. Initialisation des données
+    D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
+                         'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx','13/01/2026')
+    serv = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')
+    
+    D = matrice_vers_dataframe(D1, num_workers, num_tasks, identifiants, serv)
+    
+    tri_ajd = tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 13_01_2026.xlsx')
+    tri_hier = tri_horaire('Partie_1_LLM/data/Services Agents non affectés le 12_01_2026.xlsx')
+    
+    # 2. Parcours des agents de la veille
+    for i in df_travail_veille['identifiants']:
+        # On suppose que l'identifiant est l'index de df_travail_veille
+        # et qu'il y a une colonne 'service'
+        if i in df_travail_veille.index:
+            test = df_travail_veille.loc[i, 'service']
+        else:
+            continue # Si l'identifiant n'est pas trouvé, on passe au suivant
+            
+        # Conversion des services en listes/sets pour accélérer la recherche avec 'in'
+        services_hier_1 = tri_hier[1]['Service'].values
+        services_hier_2 = tri_hier[2]['Service'].values
+        
+        # Conditions et modifications directes dans D
+        # Remplacer le bloc de filtrage par :
+        if test in services_hier_1:
+            services_a_bloquer = pd.concat([tri_ajd[0]['Service'], tri_ajd[3]['Service']]).unique()
+            # On filtre les colonnes existantes dans D qui sont dans 'services_a_bloquer'
+            cols = [c for c in services_a_bloquer if c in D.columns]
+            D.loc[i, cols] = 0
+            
+        elif test in services_hier_2:
+            services_a_bloquer = pd.concat([tri_ajd[0]['Service'], tri_ajd[3]['Service'], tri_ajd[4]['Service']])
+            mask = (D['Service'].isin(services_a_bloquer)) & (D['identifiant'] == i)
+            D.loc[mask, :] = 0
+            
+    return D.to_numpy()
+'''
+def correction_en_fonction_du_jour_d_avant(df_travail_veille, num_workers, num_tasks, identifiants):
+    # 1. Initialisation des données pour le jour J (13/01/2026) -> AJOUT DES UNDERSCORES ICI
+    D1 = initialize_data("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx",
+                         'Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx', '13/01/2026')
+    
+    # Extraction de la liste propre des services pour aujourd'hui -> AJOUT DES UNDERSCORES ICI
+    serv_df = pd.read_excel('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')
+    serv_list = serv_df['Service'].tolist()
+    
+    # Reconstruction de la matrice D de base pour aujourd'hui
+    D = matrice_vers_dataframe(D1, num_workers, num_tasks, identifiants, serv_list)
+    
+    # Récupération des tris horaires (Aujourd'hui vs Veille) -> AJOUT DES UNDERSCORES ICI
+    tri_ajd = tri_horaire('Partie_1_LLM/data/Services_Agents_non_affectés_le_13_01_2026.xlsx')
+    tri_hier = tri_horaire('Partie_1_LLM/data/Services_Agents_non_affectés_le_12_01_2026.xlsx')
+    
+    # 2. Parcours des agents à partir du DataFrame de la veille
+    for i in df_travail_veille.index:
+        if i not in D.index:
+            continue
+            
+        # Récupération sécurisée du service effectué hier par l'agent i
+        test = df_travail_veille.loc[i, 'service'] if 'service' in df_travail_veille.columns else None
+        if pd.isna(test) or test is None:
+            continue
+            
+        services_hier_1 = tri_hier[1]['Service'].values  # Services Après-midi d'hier
+        services_hier_2 = tri_hier[2]['Service'].values  # Services Nuit d'hier
+        
+        # Si l'agent a travaillé d'après-midi la veille
+        if test in services_hier_1:
+            services_a_bloquer = pd.concat([tri_ajd[0]['Service'], tri_ajd[3]['Service']]).unique()
+            cols = [c for c in services_a_bloquer if c in D.columns]
+            D.loc[i, cols] = 0
+            
+        # Si l'agent a travaillé de nuit la veille
+        elif test in services_hier_2:
+            services_a_bloquer = pd.concat([tri_ajd[0]['Service'], tri_ajd[3]['Service'], tri_ajd[4]['Service']]).unique()
+            cols = [c for c in services_a_bloquer if c in D.columns]
+            D.loc[i, cols] = 0
+            
+    return D.to_numpy()
+print('correction:')               
+print(correction_en_fonction_du_jour_d_avant(df,len(D),len(D[0]),identifiants))
+        
+        
+
+
+    
+res = opti()
+
+#On crée une fonction qui va update le planning excel de la semaine
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+
+def update_planning(res,day):
+    df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx")) [['Service', 'Début', 'Fin']]
+    wb = load_workbook("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")
+    ws = wb.active
+    numero_colonne = None
+
+    for cell in ws[1]:  # ligne 1 = ligne des titres
+        if cell.value == day:
+            numero_colonne = cell.column
+            break
+
+    vert = PatternFill(
+        start_color="92D050",
+        end_color="92D050",
+        fill_type="solid"
+    )
+
+    rouge = PatternFill(
+        start_color="FF0000",
+        end_color="FF0000",
+        fill_type="solid"
+    )
+    jaune_pastel = PatternFill(
+    start_color="FFF2CC",
+    end_color="FFF2CC",
+    fill_type="solid"
+    )
+
+    for i in range(len(D)):
+        if np.any(res[i,:]):
+            index_serv = np.where(res[i,:])
+            service_name = df_serv['Service'].iloc[index_serv]
+            cellule= ws.cell(row=i + 2, column=numero_colonne)
+            cellule.value= (str(service_name))[7:7+8]
+            cellule.fill = jaune_pastel
+
+    wb.save(f"planning_du_{day.replace("/","_")}_updated.xlsx")
+
+
+def create_dico_affectés(mat_res, day):
+    ans = []
+    df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx")) [['Service', 'Début', 'Fin']]
+    df_mach =  pd.read_excel("Partie_1_LLM/data/Export_Planning_du_12_01_2026_au_16_01_2026.xlsx")['Identifiant']
+    N = len(df_mach)
+    for i in range(N):
+        if np.any(mat_res[i, :]):
+            j = np.where(mat_res[i,:] == 1)
+            ans.append({"agent": str(df_mach['Identifiant'].iloc[i]), "service": str(df_serv['Service'].iloc[j])})
+    return ans
+
+def create_liste_non_affecté(mat_res, day):
+    ans = []
+    df_serv = (pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectés_le_{day.replace("/","_")}.xlsx")) [['Service', 'Début', 'Fin']]
+    P = len(df_serv)
+    for j in range(P):
+        if not np.any(mat_res[:,j]):
+            ans.append(df_serv['Service'].iloc[j])
+    return ans
+
+
+
+
+
+
 
