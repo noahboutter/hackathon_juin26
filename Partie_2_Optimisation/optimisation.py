@@ -442,7 +442,7 @@ def main(day):
     dico_mach = {day: create_dico_affectes(mat_res, day)}
     liste_serv = {day: create_liste_non_affecte(mat_res, day)}
     for i in range(13,17):
-        D = correction_en_fonction_du_jour_d_avant(matrice_vers_dataframe(mat_res, len(D), len(D[0]), identifiants, pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{i}_01_2026.xlsx")["Service"].tolist()), len(D), len(D[0]), identifiants,f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{i}_01_2026.xlsx",f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{i - 1}_01_2026.xlsx",f"{i}/01/2026")
+        D = correction_en_fonction_du_jour_d_avant(matrice_vers_dataframe(mat_res, len(D), len(D[0]), identifiants, pd.read_excel(f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{i-1}_01_2026.xlsx")["Service"].tolist()), len(D), len(D[0]), identifiants,f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{i}_01_2026.xlsx",f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{i - 1}_01_2026.xlsx",f"{i}/01/2026")
         W = W_initialize("Partie_2_Optimisation/preferences_agents.xlsx", f"Partie_1_LLM/data/Services_Agents_non_affectes_le_{i}_01_2026.xlsx", (len(D), len(D[0])), D)
         mat_res = opti(D,W)
         update_planning(mat_res, f"{i}/01/2026")
