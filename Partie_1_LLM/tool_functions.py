@@ -363,7 +363,7 @@ def lister_lignes_avec_penurie(date: str) -> str:
         date_fichier = date.replace("/", "_")
         fichier_cible = None
         
-        # Recherche du fichier correspondant dans SERVICES_PATHS
+        # On cherche le fichier correspondant 
         for path in SERVICES_PATHS:
             if date_fichier in path:
                 fichier_cible = path
@@ -372,7 +372,7 @@ def lister_lignes_avec_penurie(date: str) -> str:
         if not fichier_cible:
             return f"Aucun fichier de services trouvé correspondant à la date du {date}."
 
-        # On charge QUE le fichier du jour
+        # On charge que le fichier du jour
         services_du_jour = pd.read_excel(fichier_cible)
         services_du_jour.columns = [str(c).strip() for c in services_du_jour.columns]
         
