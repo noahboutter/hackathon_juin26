@@ -70,8 +70,14 @@ def _agent_connait_la_ligne(qualifications: str, ligne: str) -> bool:
 def _cellule_dispo(valeur) -> bool:
     """Un agent est considéré disponible ce jour-là si la cellule est vide,
     ou ne contient que des statuts 'disponible' (pas de repos/congé/service déjà pris)."""
-    # On découpe s'il y a plusieurs éléments (ex: "DISPO, ASSU")
+    
+    # 1. Gestion des cellules vides 
+    if pd.isna(valeur) or str(valeur).strip() == "" or str(valeur).strip().lower() == "nan":
+        return True
+        
+    # 2. Gestion des statuts multiples séparés par une virgule
     parts = [p.strip() for p in str(valeur).split(",")]
+    
     # S'il y a un élément qui indique que l'agent n'est pas disponible, on renvoie False
     for p in parts:
         if p not in STATUTS_DISPONIBLE:
